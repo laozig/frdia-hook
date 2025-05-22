@@ -1,5 +1,7 @@
 # Frida全功能Hook框架
 
+[English](README.md) | [简体中文](README-CN.md)
+
 一个功能强大的Frida脚本框架，专为Android应用分析和安全测试设计。本框架提供全面的功能模块，包括加密监控、网络监控、反调试绕过、敏感API监控和自动提取密钥。
 
 ## 目录结构
