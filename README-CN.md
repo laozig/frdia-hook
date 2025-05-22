@@ -2165,3 +2165,390 @@ adb pull /sdcard/frida_log.txt
 ## 免责声明
 
 本框架仅用于安全研究和授权测试目的。使用前请确保您有合法权限测试目标应用。对于任何滥用导致的问题，作者不承担责任。 
+
+## 模块启动和使用方法
+
+本框架支持多种使用方式，包括整体启动和单模块启动。以下详细说明各种启动和使用方法。
+
+### 基础命令格式
+
+```bash
+# 注入到新启动的应用
+frida -U -f 应用包名 -l 脚本文件路径 --no-pause
+
+# 附加到运行中的应用
+frida -U -n "应用名称" -l 脚本文件路径
+```
+
+### 整体框架启动方法
+
+```bash
+# 注入到新启动的应用，启动全功能框架
+frida -U -f com.example.app -l frida_master.js --no-pause
+
+# 附加到运行中的应用，启动全功能框架
+frida -U -n "应用名称" -l frida_master.js
+```
+
+### 单个模块启动方法
+
+#### 1. 加密监控模块
+
+```bash
+# 创建一个临时JS文件，例如 run_crypto.js
+echo 'Java.perform(function() { require("./modules/crypto_monitor.js")({logLevel: "info"}, console, null); });' > run_crypto.js
+
+# 使用此文件启动Frida
+frida -U -f com.example.app -l run_crypto.js --no-pause
+```
+
+**或者使用以下内容创建单模块启动文件：**
+
+```javascript
+// crypto_starter.js
+Java.perform(function() {
+    // 创建基本logger
+    var logger = {
+        debug: function(tag, message) { console.log(`[DEBUG][${tag}] ${message}`); },
+        info: function(tag, message) { console.log(`[INFO][${tag}] ${message}`); },
+        warn: function(tag, message) { console.log(`[WARN][${tag}] ${message}`); },
+        error: function(tag, message) { console.log(`[ERROR][${tag}] ${message}`); }
+    };
+    
+    // 创建基本utils
+    var utils = {
+        hexdump: function(array) {
+            return hexdump(array);
+        },
+        bytesToString: function(bytes) {
+            return String.fromCharCode.apply(null, bytes);
+        }
+    };
+    
+    // 配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: false,
+        autoExtractKeys: true
+    };
+    
+    // 加载加密监控模块
+    var cryptoModule = require('./modules/crypto_monitor.js')(config, logger, utils);
+    
+    console.log("[+] 加密监控模块已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    console.log("[*] 准备启动加密监控...");
+    Java.perform(function() {});
+}, 100);
+```
+
+然后使用这个文件启动：
+```bash
+frida -U -f com.example.app -l crypto_starter.js --no-pause
+```
+
+#### 2. 网络监控模块
+
+```javascript
+// network_starter.js
+Java.perform(function() {
+    // 创建基本logger和utils (与上例相同)
+    
+    // 配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: false
+    };
+    
+    // 加载网络监控模块
+    var networkModule = require('./modules/network_monitor.js')(config, logger, utils);
+    
+    // 可选：设置URL过滤器，只监控特定域名
+    networkModule.addUrlFilter("api.example.com");
+    
+    console.log("[+] 网络监控模块已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+启动命令：
+```bash
+frida -U -f com.example.app -l network_starter.js --no-pause
+```
+
+#### 3. 反调试绕过模块
+
+```javascript
+// antidebug_starter.js
+Java.perform(function() {
+    // 创建基本logger和utils (与上例相同)
+    
+    // 配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: false,
+        bypassAllDetection: true
+    };
+    
+    // 加载反调试绕过模块
+    var antiDebugModule = require('./modules/anti_debug.js')(config, logger, utils);
+    
+    console.log("[+] 反调试绕过模块已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+启动命令：
+```bash
+frida -U -f com.example.app -l antidebug_starter.js --no-pause
+```
+
+#### 4. 敏感API监控模块
+
+```javascript
+// sensitive_api_starter.js
+Java.perform(function() {
+    // 创建基本logger和utils (与上例相同)
+    
+    // 配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: false
+    };
+    
+    // 加载敏感API监控模块
+    var sensitiveApiModule = require('./modules/sensitive_api.js')(config, logger, utils);
+    
+    // 可选：添加自定义敏感API
+    sensitiveApiModule.addCustomApi("com.example.app.UserManager", "getUserData");
+    
+    console.log("[+] 敏感API监控模块已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+启动命令：
+```bash
+frida -U -f com.example.app -l sensitive_api_starter.js --no-pause
+```
+
+#### 5. 自动提取密钥模块
+
+```javascript
+// extractor_starter.js
+Java.perform(function() {
+    // 创建基本logger和utils (与上例相同)
+    
+    // 配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: true,
+        autoExtractKeys: true
+    };
+    
+    // 加载自动提取密钥模块
+    var extractorModule = require('./modules/auto_extractor.js')(config, logger, utils);
+    
+    // 可选：设置密钥提取回调
+    extractorModule.addKeyExtractedCallback(function(keyInfo) {
+        console.log(`[*] 提取到新密钥: ${keyInfo.type} - ${keyInfo.value}`);
+    });
+    
+    console.log("[+] 自动提取密钥模块已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+启动命令：
+```bash
+frida -U -f com.example.app -l extractor_starter.js --no-pause
+```
+
+#### 6. DEX脱壳模块
+
+```javascript
+// dex_dumper_starter.js
+Java.perform(function() {
+    // 创建基本logger和utils (与上例相同)
+    
+    // 配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: true
+    };
+    
+    // 加载DEX脱壳模块
+    var dexDumper = require('./modules/dex_dumper.js')(config, logger, utils);
+    
+    // 可选：设置输出目录
+    dexDumper.setOutputDirectory('/sdcard/frida_dex_dumps/');
+    
+    // 可选：设置DEX大小限制
+    dexDumper.setDexSizeLimit(4096, 50 * 1024 * 1024);
+    
+    // 30秒后显示统计结果
+    setTimeout(function() {
+        dexDumper.showStats();
+    }, 30000);
+    
+    console.log("[+] DEX脱壳模块已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+启动命令：
+```bash
+frida -U -f com.example.app -l dex_dumper_starter.js --no-pause
+```
+
+### 使用示例脚本
+
+框架提供了多个预配置示例，位于`examples/`目录：
+
+#### DEX脱壳示例（中文版）
+
+```bash
+# 运行预配置的DEX脱壳示例
+frida -U -f com.example.app -l examples/dex_dumper_guide.js --no-pause
+```
+
+不同场景的脱壳方法（在脚本中取消注释对应函数）：
+- `basicUnpacking()`: 基本脱壳功能
+- `memoryOptimizedUnpacking()`: 内存优化版，适合低内存设备
+- `huaweiHmsUnpacking()`: 针对华为HMS应用优化
+- `bytedanceUnpacking()`: 针对字节跳动应用优化
+- `advancedUnpacking()`: 高级脱壳，结合反调试绕过
+
+#### DEX脱壳示例（英文版）
+
+```bash
+# 运行英文版DEX脱壳示例
+frida -U -f com.example.app -l examples/dex_dumper_guide_en.js --no-pause
+```
+
+### 通用启动文件创建方法
+
+如果需要创建自定义启动文件，可参考以下通用模板：
+
+```javascript
+// custom_starter.js
+Java.perform(function() {
+    // 创建日志器
+    var logger = {
+        debug: function(tag, message) { console.log(`[DEBUG][${tag}] ${message}`); },
+        info: function(tag, message) { console.log(`[INFO][${tag}] ${message}`); },
+        warn: function(tag, message) { console.log(`[WARN][${tag}] ${message}`); },
+        error: function(tag, message) { console.log(`[ERROR][${tag}] ${message}`); }
+    };
+    
+    // 创建工具函数
+    var utils = {
+        hexdump: function(array) {
+            return hexdump(array);
+        },
+        bytesToString: function(bytes) {
+            return String.fromCharCode.apply(null, bytes);
+        },
+        stringToBytes: function(str) {
+            var bytes = [];
+            for (var i = 0; i < str.length; i++) {
+                bytes.push(str.charCodeAt(i));
+            }
+            return bytes;
+        },
+        getStackTrace: function() {
+            return Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n');
+        }
+    };
+    
+    // 基本配置
+    var config = {
+        logLevel: 'info',
+        fileLogging: false
+    };
+    
+    // 加载所需模块
+    // 取消注释需要启动的模块
+    //require('./modules/crypto_monitor.js')(config, logger, utils);
+    //require('./modules/network_monitor.js')(config, logger, utils);
+    //require('./modules/anti_debug.js')(config, logger, utils);
+    //require('./modules/sensitive_api.js')(config, logger, utils);
+    //require('./modules/auto_extractor.js')(config, logger, utils);
+    //require('./modules/dex_dumper.js')(config, logger, utils);
+    
+    console.log("[+] 自定义模块组合已启动");
+});
+
+// 触发加载
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+创建后使用以下命令启动：
+```bash
+frida -U -f com.example.app -l custom_starter.js --no-pause
+```
+
+### 命令行参数说明
+
+Frida常用命令行参数说明：
+
+- `-U`: 连接USB设备
+- `-f 包名`: 指定要启动的应用包名
+- `-n "应用名"`: 通过应用名连接到运行中的进程
+- `-p 进程ID`: 通过进程ID连接到运行中的进程
+- `-l 脚本路径`: 指定要注入的JavaScript脚本文件
+- `--no-pause`: 注入后立即运行应用，不暂停
+- `-o 输出文件`: 将控制台输出保存到文件
+- `--runtime=v8`: 使用V8 JavaScript引擎（推荐）
+- `--debug`: 启用调试输出
+
+### 高级使用技巧
+
+1. **静默日志**：将输出重定向到文件
+```bash
+frida -U -f com.example.app -l frida_master.js --no-pause > log.txt 2>&1
+```
+
+2. **持久化连接**：使用-R参数在应用重启后重新附加
+```bash
+frida -U -f com.example.app -l frida_master.js --no-pause -R
+```
+
+3. **远程调试**：通过网络连接设备
+```bash
+# 在设备上运行frida-server
+adb shell "/data/local/tmp/frida-server &"
+
+# 在电脑上连接
+frida -H 设备IP地址 -f com.example.app -l frida_master.js --no-pause
+```
+
+4. **组合多个脚本**：可以同时加载多个脚本
+```bash
+frida -U -f com.example.app -l script1.js -l script2.js --no-pause
+```

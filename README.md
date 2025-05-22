@@ -1723,3 +1723,390 @@ module.exports = function(config, logger, utils) {
 ---
 
 **免责声明**: 本框架仅用于安全研究和授权测试目的。使用前请确保您有合法权限测试目标应用。对于任何滥用导致的问题，作者不承担责任。 
+
+## Module Startup and Usage Guide
+
+This framework supports multiple usage methods, including full framework startup and individual module startup. Below are detailed instructions for various startup and usage methods.
+
+### Basic Command Format
+
+```bash
+# Inject into a newly launched application
+frida -U -f com.example.app -l script_file_path --no-pause
+
+# Attach to a running application
+frida -U -n "Application Name" -l script_file_path
+```
+
+### Full Framework Startup Method
+
+```bash
+# Inject into a newly launched application, start the full-featured framework
+frida -U -f com.example.app -l frida_master.js --no-pause
+
+# Attach to a running application, start the full-featured framework
+frida -U -n "Application Name" -l frida_master.js
+```
+
+### Individual Module Startup Methods
+
+#### 1. Crypto Monitoring Module
+
+```bash
+# Create a temporary JS file, e.g., run_crypto.js
+echo 'Java.perform(function() { require("./modules/crypto_monitor.js")({logLevel: "info"}, console, null); });' > run_crypto.js
+
+# Use this file to start Frida
+frida -U -f com.example.app -l run_crypto.js --no-pause
+```
+
+**Or create a single module startup file with the following content:**
+
+```javascript
+// crypto_starter.js
+Java.perform(function() {
+    // Create basic logger
+    var logger = {
+        debug: function(tag, message) { console.log(`[DEBUG][${tag}] ${message}`); },
+        info: function(tag, message) { console.log(`[INFO][${tag}] ${message}`); },
+        warn: function(tag, message) { console.log(`[WARN][${tag}] ${message}`); },
+        error: function(tag, message) { console.log(`[ERROR][${tag}] ${message}`); }
+    };
+    
+    // Create basic utils
+    var utils = {
+        hexdump: function(array) {
+            return hexdump(array);
+        },
+        bytesToString: function(bytes) {
+            return String.fromCharCode.apply(null, bytes);
+        }
+    };
+    
+    // Configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: false,
+        autoExtractKeys: true
+    };
+    
+    // Load crypto monitoring module
+    var cryptoModule = require('./modules/crypto_monitor.js')(config, logger, utils);
+    
+    console.log("[+] Crypto monitoring module started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    console.log("[*] Preparing to start crypto monitoring...");
+    Java.perform(function() {});
+}, 100);
+```
+
+Then use this file to start:
+```bash
+frida -U -f com.example.app -l crypto_starter.js --no-pause
+```
+
+#### 2. Network Monitoring Module
+
+```javascript
+// network_starter.js
+Java.perform(function() {
+    // Create basic logger and utils (same as above)
+    
+    // Configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: false
+    };
+    
+    // Load network monitoring module
+    var networkModule = require('./modules/network_monitor.js')(config, logger, utils);
+    
+    // Optional: Set URL filter to monitor specific domains only
+    networkModule.addUrlFilter("api.example.com");
+    
+    console.log("[+] Network monitoring module started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+Startup command:
+```bash
+frida -U -f com.example.app -l network_starter.js --no-pause
+```
+
+#### 3. Anti-Debug Bypass Module
+
+```javascript
+// antidebug_starter.js
+Java.perform(function() {
+    // Create basic logger and utils (same as above)
+    
+    // Configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: false,
+        bypassAllDetection: true
+    };
+    
+    // Load anti-debug bypass module
+    var antiDebugModule = require('./modules/anti_debug.js')(config, logger, utils);
+    
+    console.log("[+] Anti-debug bypass module started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+Startup command:
+```bash
+frida -U -f com.example.app -l antidebug_starter.js --no-pause
+```
+
+#### 4. Sensitive API Monitoring Module
+
+```javascript
+// sensitive_api_starter.js
+Java.perform(function() {
+    // Create basic logger and utils (same as above)
+    
+    // Configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: false
+    };
+    
+    // Load sensitive API monitoring module
+    var sensitiveApiModule = require('./modules/sensitive_api.js')(config, logger, utils);
+    
+    // Optional: Add custom sensitive API
+    sensitiveApiModule.addCustomApi("com.example.app.UserManager", "getUserData");
+    
+    console.log("[+] Sensitive API monitoring module started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+Startup command:
+```bash
+frida -U -f com.example.app -l sensitive_api_starter.js --no-pause
+```
+
+#### 5. Auto Extractor Module
+
+```javascript
+// extractor_starter.js
+Java.perform(function() {
+    // Create basic logger and utils (same as above)
+    
+    // Configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: true,
+        autoExtractKeys: true
+    };
+    
+    // Load auto extractor module
+    var extractorModule = require('./modules/auto_extractor.js')(config, logger, utils);
+    
+    // Optional: Set key extraction callback
+    extractorModule.addKeyExtractedCallback(function(keyInfo) {
+        console.log(`[*] New key extracted: ${keyInfo.type} - ${keyInfo.value}`);
+    });
+    
+    console.log("[+] Auto extractor module started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+Startup command:
+```bash
+frida -U -f com.example.app -l extractor_starter.js --no-pause
+```
+
+#### 6. DEX Dumper Module
+
+```javascript
+// dex_dumper_starter.js
+Java.perform(function() {
+    // Create basic logger and utils (same as above)
+    
+    // Configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: true
+    };
+    
+    // Load DEX dumper module
+    var dexDumper = require('./modules/dex_dumper.js')(config, logger, utils);
+    
+    // Optional: Set output directory
+    dexDumper.setOutputDirectory('/sdcard/frida_dex_dumps/');
+    
+    // Optional: Set DEX size limits
+    dexDumper.setDexSizeLimit(4096, 50 * 1024 * 1024);
+    
+    // Show statistics after 30 seconds
+    setTimeout(function() {
+        dexDumper.showStats();
+    }, 30000);
+    
+    console.log("[+] DEX dumper module started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+Startup command:
+```bash
+frida -U -f com.example.app -l dex_dumper_starter.js --no-pause
+```
+
+### Using Example Scripts
+
+The framework provides several pre-configured examples in the `examples/` directory:
+
+#### DEX Dumper Example (English Version)
+
+```bash
+# Run the pre-configured DEX dumper example
+frida -U -f com.example.app -l examples/dex_dumper_guide_en.js --no-pause
+```
+
+Different unpacking methods for various scenarios (uncomment the corresponding function in the script):
+- `basicUnpacking()`: Basic unpacking functionality
+- `memoryOptimizedUnpacking()`: Memory-optimized version, suitable for low-memory devices
+- `huaweiHmsUnpacking()`: Optimized for Huawei HMS applications
+- `bytedanceUnpacking()`: Optimized for ByteDance applications
+- `advancedUnpacking()`: Advanced unpacking, combined with anti-debug bypass
+
+#### DEX Dumper Example (Chinese Version)
+
+```bash
+# Run the Chinese version of the DEX dumper example
+frida -U -f com.example.app -l examples/dex_dumper_guide.js --no-pause
+```
+
+### Generic Startup File Creation Method
+
+If you need to create a custom startup file, you can refer to the following generic template:
+
+```javascript
+// custom_starter.js
+Java.perform(function() {
+    // Create logger
+    var logger = {
+        debug: function(tag, message) { console.log(`[DEBUG][${tag}] ${message}`); },
+        info: function(tag, message) { console.log(`[INFO][${tag}] ${message}`); },
+        warn: function(tag, message) { console.log(`[WARN][${tag}] ${message}`); },
+        error: function(tag, message) { console.log(`[ERROR][${tag}] ${message}`); }
+    };
+    
+    // Create utility functions
+    var utils = {
+        hexdump: function(array) {
+            return hexdump(array);
+        },
+        bytesToString: function(bytes) {
+            return String.fromCharCode.apply(null, bytes);
+        },
+        stringToBytes: function(str) {
+            var bytes = [];
+            for (var i = 0; i < str.length; i++) {
+                bytes.push(str.charCodeAt(i));
+            }
+            return bytes;
+        },
+        getStackTrace: function() {
+            return Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join('\n');
+        }
+    };
+    
+    // Basic configuration
+    var config = {
+        logLevel: 'info',
+        fileLogging: false
+    };
+    
+    // Load required modules
+    // Uncomment the modules you want to start
+    //require('./modules/crypto_monitor.js')(config, logger, utils);
+    //require('./modules/network_monitor.js')(config, logger, utils);
+    //require('./modules/anti_debug.js')(config, logger, utils);
+    //require('./modules/sensitive_api.js')(config, logger, utils);
+    //require('./modules/auto_extractor.js')(config, logger, utils);
+    //require('./modules/dex_dumper.js')(config, logger, utils);
+    
+    console.log("[+] Custom module combination started");
+});
+
+// Trigger loading
+setTimeout(function() {
+    Java.perform(function() {});
+}, 100);
+```
+
+After creation, use the following command to start:
+```bash
+frida -U -f com.example.app -l custom_starter.js --no-pause
+```
+
+### Command-Line Parameter Description
+
+Commonly used Frida command-line parameters:
+
+- `-U`: Connect to USB device
+- `-f package_name`: Specify the package name of the application to launch
+- `-n "Application Name"`: Connect to a running process by application name
+- `-p Process ID`: Connect to a running process by process ID
+- `-l script_path`: Specify the JavaScript script file to inject
+- `--no-pause`: Run the application immediately after injection without pausing
+- `-o output_file`: Save console output to a file
+- `--runtime=v8`: Use the V8 JavaScript engine (recommended)
+- `--debug`: Enable debug output
+
+### Advanced Usage Tips
+
+1. **Silent Logging**: Redirect output to a file
+```bash
+frida -U -f com.example.app -l frida_master.js --no-pause > log.txt 2>&1
+```
+
+2. **Persistent Connection**: Use the -R parameter to reattach after application restart
+```bash
+frida -U -f com.example.app -l frida_master.js --no-pause -R
+```
+
+3. **Remote Debugging**: Connect to a device over the network
+```bash
+# Run frida-server on the device
+adb shell "/data/local/tmp/frida-server &"
+
+# Connect from your computer
+frida -H device_IP_address -f com.example.app -l frida_master.js --no-pause
+```
+
+4. **Combining Multiple Scripts**: Load multiple scripts simultaneously
+```bash
+frida -U -f com.example.app -l script1.js -l script2.js --no-pause
+```
