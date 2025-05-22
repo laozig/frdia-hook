@@ -45,7 +45,7 @@ frdia/
 1. 将代码克隆到本地：
 
 ```bash
-git clone https://github.com/yourusername/frdia.git
+git clone https://github.com/laozig/frdia-hook.git
 cd frdia
 ```
 
