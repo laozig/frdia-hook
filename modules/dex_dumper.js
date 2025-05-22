@@ -47,6 +47,14 @@ module.exports = function(userConfig, logger, utils) {
         logger.info(tag, `输出目录: ${config.outputDir}`);
         logger.info(tag, `支持的保护: ${config.supportedProtections.join(', ')}`);
         
+        // 检查Frida版本兼容性
+        if (utils && utils.isCompatibilityRequired && utils.isCompatibilityRequired('general')) {
+            logger.info(tag, "检测到兼容模式，调整脱壳策略");
+            // 在兼容模式下调整某些策略
+            config.memScanIntervalMs = Math.max(config.memScanIntervalMs, 8000); // 增加扫描间隔
+            config.maxDexSize = Math.min(config.maxDexSize, 30 * 1024 * 1024); // 限制最大DEX大小
+        }
+        
         // 创建输出目录
         try {
             const outputDir = new File(config.outputDir);
@@ -542,12 +550,39 @@ module.exports = function(userConfig, logger, utils) {
     // 转储特定内存区域
     function dumpMemoryRegion(address, buffer, size) {
         try {
-            // 这里需要使用Native层方法读取内存
-            // 在Frida中，可以使用Memory API
-            Memory.readByteArray(ptr(address), buffer, size);
-            return true;
+            // 检查是否需要使用兼容模式
+            if (utils && utils.isCompatibilityRequired && utils.isCompatibilityRequired('memoryRead')) {
+                // 使用兼容性函数读取内存
+                const memData = utils.readMemory(address, size);
+                if (memData && memData.length > 0) {
+                    // 复制到目标缓冲区
+                    for (let i = 0; i < Math.min(size, memData.length); i++) {
+                        buffer[i] = memData[i];
+                    }
+                    return true;
+                }
+                return false;
+            } else {
+                // 标准方法
+                Memory.readByteArray(ptr(address), buffer, size);
+                return true;
+            }
         } catch (e) {
             logger.debug(tag, `读取内存区域失败 [${address}]: ${e}`);
+            // 在错误时尝试兼容模式
+            try {
+                if (utils && utils.readMemory) {
+                    const memData = utils.readMemory(address, size);
+                    if (memData && memData.length > 0) {
+                        for (let i = 0; i < Math.min(size, memData.length); i++) {
+                            buffer[i] = memData[i];
+                        }
+                        return true;
+                    }
+                }
+            } catch (e2) {
+                logger.debug(tag, `兼容模式读取内存也失败: ${e2}`);
+            }
             return false;
         }
     }
@@ -2019,7 +2054,7 @@ module.exports = function(userConfig, logger, utils) {
         setDexSizeLimit,
         addProtectionSupport,
         showStats,
-        // 新增API
+        // 实用API
         scanNow: function() {
             logger.info(tag, "手动触发内存扫描");
             scanMemoryForDex();
@@ -2027,6 +2062,12 @@ module.exports = function(userConfig, logger, utils) {
         forceLoadClasses: function() {
             logger.info(tag, "手动触发类加载");
             forceLoadAllClasses();
+        },
+        setScanInterval: function(intervalMs) {
+            if (typeof intervalMs === 'number' && intervalMs > 1000) {
+                config.memScanIntervalMs = intervalMs;
+                logger.info(tag, `内存扫描间隔设置为 ${intervalMs} 毫秒`);
+            }
         },
         enableProtection: function(protectionName, enabled) {
             if (typeof enabled !== 'boolean') enabled = true;
@@ -2042,12 +2083,6 @@ module.exports = function(userConfig, logger, utils) {
                     config.supportedProtections.splice(index, 1);
                     logger.info(tag, `禁用 ${protectionName} 保护类型支持`);
                 }
-            }
-        },
-        setScanInterval: function(intervalMs) {
-            if (typeof intervalMs === 'number' && intervalMs > 1000) {
-                config.memScanIntervalMs = intervalMs;
-                logger.info(tag, `内存扫描间隔设置为 ${intervalMs} 毫秒`);
             }
         },
         getConfig: function() {
@@ -2067,6 +2102,33 @@ module.exports = function(userConfig, logger, utils) {
         },
         isProtectionEnabled: function(protectionName) {
             return config.supportedProtections.includes(protectionName);
+        },
+        // 兼容性相关API
+        setCompatibilityMode: function(enabled) {
+            if (utils && utils.isCompatibilityRequired) {
+                if (enabled) {
+                    // 设置特定内存扫描参数以适应兼容模式
+                    config.memScanIntervalMs = Math.max(config.memScanIntervalMs, 8000);
+                    config.maxDexSize = Math.min(config.maxDexSize, 30 * 1024 * 1024);
+                    logger.info(tag, "已启用兼容模式，优化参数配置");
+                } else {
+                    logger.debug(tag, "尝试禁用兼容模式（注意：全局兼容模式设置可能优先）");
+                }
+            }
+        },
+        // 安全模式API，降低资源使用，提高稳定性
+        setSafeMode: function(enabled) {
+            if (enabled) {
+                config.memScanIntervalMs = Math.max(config.memScanIntervalMs, 10000); // 至少10秒
+                config.maxDexSize = Math.min(config.maxDexSize, 20 * 1024 * 1024); // 最大20MB
+                config.filterSystemClasses = true; // 过滤系统类
+                logger.info(tag, "已启用安全模式，降低资源使用");
+            } else {
+                // 恢复默认配置（可根据需要调整）
+                config.memScanIntervalMs = defaultConfig.memScanIntervalMs;
+                config.maxDexSize = defaultConfig.maxDexSize;
+                logger.debug(tag, "已禁用安全模式");
+            }
         }
     };
 }; 
