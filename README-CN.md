@@ -2,14 +2,14 @@
 
 [English](README.md) | [简体中文](README-CN.md)
 
-一个功能强大的Frida脚本框架，专为Android应用分析和安全测试设计。本框架提供全面的功能模块，包括加密监控、网络监控、反调试绕过、敏感API监控和自动提取密钥。
+一个功能强大、模块化的Frida脚本框架，专为Android应用分析、渗透测试和安全研究设计。本框架提供全面的功能模块，包括加密监控、网络监控、反调试绕过、敏感API监控和自动提取密钥。
 
 ## 目录结构
 
 ```
 frdia/
 │
-├── frida_master.js          # 主入口文件
+├── frida_master.js          # 主入口文件，配置和加载所有模块
 ├── frida_master.js.bak      # 主文件备份
 │
 ├── modules/                 # 功能模块目录
@@ -32,22 +32,40 @@ frdia/
     └── ...                  # 其他单一功能脚本
 ```
 
+## 环境要求
+
+- Frida >= 14.0.0
+- Android设备(真机或模拟器)
+- Python 3.x (如使用Frida-tools)
+
 ## 快速开始
 
-### 使用方法
+### 基本使用方法
+
+1. 将代码克隆到本地：
 
 ```bash
-# 注入到指定应用
+git clone https://github.com/laozig/frdia-hook.git
+cd frdia
+```
+
+2. 使用Frida注入脚本：
+
+```bash
+# 指定包名注入(推荐)
 frida -U -f com.example.app -l frida_master.js --no-pause
 
 # 或附加到运行中的进程
 frida -U -n "应用名称" -l frida_master.js
+
+# 使用进程ID附加
+frida -U -p <PID> -l frida_master.js
 ```
 
 ### 日志输出
-- 控制台实时输出
-- 日志文件：`/sdcard/frida_log.txt`
-- 提取的密钥：`/sdcard/frida_extracted_keys.json`
+- 控制台实时输出监控信息
+- 日志文件保存在：`/sdcard/frida_log.txt`
+- 提取的密钥保存在：`/sdcard/frida_extracted_keys.json`
 
 ## 主框架文件说明
 
@@ -65,15 +83,17 @@ var config = {
     autoExtractKeys: true,      // 自动提取密钥
     bypassAllDetection: true,   // 绕过检测
     colorOutput: true,          // 彩色输出
-    stackTrace: false           // 打印调用栈
+    stackTrace: false,          // 打印调用栈
+    fridaCompatMode: false      // Frida 14.x兼容模式
 };
 ```
 
 #### 主要功能
-- 日志系统：提供四个日志级别(debug, info, warn, error)
+- 日志系统：提供四个日志级别(debug, info, warn, error)和彩色输出
 - 工具函数：提供hex转储、字节数组转换等实用功能
 - 模块加载：按需加载各功能模块
 - 环境检查：检查运行环境并创建日志文件
+- 版本检测：自动检测Frida版本并在需要时启用兼容模式
 
 ## 功能模块详细介绍
 
@@ -2552,3 +2572,12 @@ frida -H 设备IP地址 -f com.example.app -l frida_master.js --no-pause
 ```bash
 frida -U -f com.example.app -l script1.js -l script2.js --no-pause
 ```
+
+### 工具函数
+
+主框架提供了常用工具函数：
+- `utils.hexdump()`: 生成二进制数据的十六进制表示
+- `utils.bytesToString()`: 字节数组转字符串
+- `utils.stringToBytes()`: 字符串转字节数组
+- `utils.getStackTrace()`: 获取当前调用栈
+- `utils.readMemory()`: 跨Frida版本兼容的内存读取函数

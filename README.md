@@ -1,135 +1,138 @@
-# Frida全功能Hook框架
+# Frida Full-Featured Hook Framework
 
 [English](README.md) | [简体中文](README-CN.md)
 
-一个功能强大、模块化的Frida脚本框架，用于Android应用分析、渗透测试和安全研究。框架提供全面的功能，包括加密监控、网络监控、反调试绕过、敏感API监控和自动提取密钥。
+A powerful, modular Frida script framework for Android application analysis, penetration testing and security research. The framework provides comprehensive features including encryption monitoring, network monitoring, anti-debugging bypass, sensitive API monitoring, and automatic key extraction.
 
-## 目录结构
+## Directory Structure
 
 ```
 frdia/
 │
-├── frida_master.js          # 主入口文件，配置和加载所有模块
-├── frida_master.js.bak      # 主文件备份
+├── frida_master.js          # Main entry file, configures and loads all modules
+├── frida_master.js.bak      # Main file backup
 │
-├── modules/                 # 功能模块目录
-│   ├── crypto_monitor.js    # 加密监控模块
-│   ├── network_monitor.js   # 网络监控模块
-│   ├── anti_debug.js        # 反调试绕过模块
-│   ├── sensitive_api.js     # 敏感API监控模块
-│   ├── auto_extractor.js    # 自动提取密钥模块
-│   ├── system_api_monitor.js # 系统函数监控模块
-│   └── dex_dumper.js        # DEX脱壳模块
+├── modules/                 # Functional modules directory
+│   ├── crypto_monitor.js    # Encryption monitoring module
+│   ├── network_monitor.js   # Network monitoring module
+│   ├── anti_debug.js        # Anti-debugging bypass module
+│   ├── sensitive_api.js     # Sensitive API monitoring module
+│   ├── auto_extractor.js    # Automatic key extraction module
+│   ├── system_api_monitor.js # System function monitoring module
+│   └── dex_dumper.js        # DEX unpacking module
 │
-├── examples/                # 示例代码目录
-│   └── usage_example.js     # 使用示例脚本
+├── examples/                # Example code directory
+│   └── usage_example.js     # Usage example script
 │
-└── backup/                  # 备份脚本目录(单功能脚本)
-    ├── hook_java_method.js  # Java方法Hook脚本
-    ├── hook_native_function.js # 原生函数Hook脚本
-    ├── bypass_ssl_pinning.js # SSL证书固定绕过
-    ├── dump_stack.js        # 堆栈跟踪脚本
-    └── ...                  # 其他单一功能脚本
+└── backup/                  # Backup script directory (single-function scripts)
+    ├── hook_java_method.js  # Java method hook script
+    ├── hook_native_function.js # Native function hook script
+    ├── bypass_ssl_pinning.js # SSL certificate pinning bypass
+    ├── dump_stack.js        # Stack trace script
+    └── ...                  # Other single-function scripts
 ```
 
-## 环境要求
+## Requirements
 
-- Frida >= 15.0.0
-- Android设备(真机或模拟器)
-- Python 3.x (如使用Frida-tools)
+- Frida >= 14.0.0
+- Android device (physical or emulator)
+- Python 3.x (if using Frida-tools)
 
-## 快速开始
+## Quick Start
 
-### 基本使用方法
+### Basic Usage
 
-1. 将代码克隆到本地：
+1. Clone the code to your local machine:
 
 ```bash
 git clone https://github.com/laozig/frdia-hook.git
 cd frdia
 ```
 
-2. 使用Frida注入脚本：
+2. Inject the script using Frida:
 
 ```bash
-# 指定包名注入(推荐)
+# Specify package name for injection (recommended)
 frida -U -f com.example.app -l frida_master.js --no-pause
 
-# 或附加到已运行的进程
-frida -U -n "应用名称" -l frida_master.js
+# Or attach to a running process
+frida -U -n "Application Name" -l frida_master.js
 
-# 使用进程ID附加
+# Attach using process ID
 frida -U -p <PID> -l frida_master.js
 ```
 
-### 日志输出
+### Log Output
 
-- 控制台实时输出监控信息
-- 日志文件保存在：`/sdcard/frida_log.txt`
-- 提取的密钥保存在：`/sdcard/frida_extracted_keys.json`
+- Real-time monitoring information output to console
+- Log file saved at: `/sdcard/frida_log.txt`
+- Extracted keys saved at: `/sdcard/frida_extracted_keys.json`
 
-## 主框架文件：frida_master.js
+## Main Framework File: frida_master.js
 
-主入口文件负责配置框架和加载各功能模块。
+The main entry file is responsible for configuring the framework and loading various functional modules.
 
-### 配置参数
+### Configuration Parameters
 
-在`frida_master.js`中，可以修改以下配置：
+In `frida_master.js`, you can modify the following configuration:
 
 ```javascript
 var config = {
-    logLevel: 'info',           // 日志级别: debug, info, warn, error
-    fileLogging: true,          // 是否保存日志到文件
-    logFilePath: '/sdcard/frida_log.txt',  // 日志文件路径
-    autoExtractKeys: true,      // 自动提取加密密钥
-    bypassAllDetection: true,   // 绕过所有检测机制
-    colorOutput: true,          // 控制台彩色输出
-    stackTrace: false           // 打印调用栈
+    logLevel: 'info',           // Log level: debug, info, warn, error
+    fileLogging: true,          // Whether to save logs to a file
+    logFilePath: '/sdcard/frida_log.txt',  // Log file path
+    autoExtractKeys: true,      // Automatically extract encryption keys
+    bypassAllDetection: true,   // Bypass all detection mechanisms
+    colorOutput: true,          // Console color output
+    stackTrace: false,          // Print call stack
+    fridaCompatMode: false      // Frida 14.x compatibility mode
 };
 ```
 
-### 主要功能
+### Main Features
 
-- **日志系统**：提供四个日志级别(debug, info, warn, error)和彩色输出
-- **工具函数**：提供hex转储、字节数组转换等实用功能 
-- **模块加载**：按需加载各功能模块
-- **环境检查**：检查运行环境并创建日志文件
+- **Logging System**: Provides four log levels (debug, info, warn, error) and color output
+- **Utility Functions**: Provides hex dumps, byte array conversion, and other utility functions
+- **Module Loading**: Loads functional modules as needed
+- **Environment Check**: Checks the running environment and creates log files
+- **Version Detection**: Automatically checks Frida version and enables compatibility mode when needed
 
-### 日志系统
+### Logging System
 
-框架提供四个日志级别：
-- **debug**: 最详细的调试信息
-- **info**: 一般信息(默认)
-- **warn**: 警告信息
-- **error**: 错误信息
+The framework provides four log levels:
+- **debug**: Most detailed debug information
+- **info**: General information (default)
+- **warn**: Warning messages
+- **error**: Error messages
 
-示例：
+Example:
 ```javascript
-logger.debug("TAG", "调试信息");
-logger.info("TAG", "一般信息");
-logger.warn("TAG", "警告信息");
-logger.error("TAG", "错误信息");
+logger.debug("TAG", "Debug information");
+logger.info("TAG", "General information");
+logger.warn("TAG", "Warning message");
+logger.error("TAG", "Error message");
 ```
 
-### 工具函数
+### Utility Functions
 
-主框架提供了常用工具函数：
-- `utils.hexdump()`: 生成二进制数据的十六进制表示
-- `utils.bytesToString()`: 字节数组转字符串
-- `utils.stringToBytes()`: 字符串转字节数组
-- `utils.getStackTrace()`: 获取当前调用栈
+The main framework provides common utility functions:
+- `utils.hexdump()`: Generates a hexadecimal representation of binary data
+- `utils.bytesToString()`: Converts byte array to string
+- `utils.stringToBytes()`: Converts string to byte array
+- `utils.getStackTrace()`: Gets the current call stack
+- `utils.readMemory()`: Compatible memory reading function across Frida versions
 
-## 功能模块详细说明
+## Detailed Module Description
 
-### 1. 加密监控模块：modules/crypto_monitor.js
+### 1. Encryption Monitoring Module: modules/crypto_monitor.js
 
-#### 功能概述
+#### Feature Overview
 
-监控和记录常见加密算法的使用，自动提取密钥、IV、明文、密文。
+Monitors and records the use of common encryption algorithms, automatically extracting keys, IVs, plaintext, and ciphertext.
 
-#### 详细参数说明
+#### Detailed Parameter Description
 
-加密监控模块支持以下参数配置，可在加载模块时通过API传入：
+The encryption monitoring module supports the following parameter configurations, which can be passed through the API when loading the module:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -139,7 +142,7 @@ logger.error("TAG", "错误信息");
 | `maxDataSize` | Integer | 1024 | Maximum bytes of data to log |
 | `algorithmFilter` | String[] | [] | Only monitor specified algorithms, empty array means monitor all |
 
-#### 参数配置方法
+#### Parameter Configuration Method
 
 ```javascript
 // Manually load and configure the crypto monitoring module
@@ -156,19 +159,19 @@ cryptoModule.enableKeyExtraction(true);  // Enable key extraction
 cryptoModule.enablePlaintextLogging(false);  // Disable plaintext logging
 ```
 
-#### 支持的加密API
+#### Supported Encryption APIs
 
-- **Java加密标准库**：
-  - `javax.crypto.Cipher` (AES/DES等对称加密)
-  - `java.security.MessageDigest` (MD5/SHA等哈希算法)
-  - `android.util.Base64` (Base64编解码)
-  - RSA密钥生成和加解密
+- **Java Cryptography Standard Library**:
+  - `javax.crypto.Cipher` (AES/DES and other symmetric encryption)
+  - `java.security.MessageDigest` (MD5/SHA and other hash algorithms)
+  - `android.util.Base64` (Base64 encoding/decoding)
+  - RSA key generation and encryption/decryption
 
-- **第三方加密库**：
+- **Third-Party Encryption Libraries**:
   - BouncyCastle
   - Apache Commons Codec
 
-#### 最佳使用方法
+#### Best Usage Methods
 
 **Scenario 1: General Monitoring**
 ```javascript
@@ -194,49 +197,48 @@ cryptoModule.setAlgorithmFilter(["AES"]);
 cryptoModule.addCustomHook("com.bankapp.security.CryptoUtil", "encrypt");
 ```
 
-#### 查看监控结果
+#### View Monitoring Results
 
-所有加密操作会在控制台和日志文件中显示，格式如下：
+All encryption operations will be displayed in the console and log file, in the following format:
 
 ```
-[12:34:56][INFO] (CRYPTO) ====== 发现加密密钥 ======
-[12:34:56][INFO] (CRYPTO) 算法: AES
-[12:34:56][INFO] (CRYPTO) 密钥: [字节数组]
-[12:34:56][INFO] (CRYPTO) 密钥(HEX): A1B2C3D4E5F6...
-[12:34:56][INFO] (CRYPTO) 密钥(B64): a1b2c3d4e5f6...
-[12:34:56][INFO] (CRYPTO) IV: [字节数组]
+[12:34:56][INFO] (CRYPTO) ====== Encryption Key Found ======
+[12:34:56][INFO] (CRYPTO) Algorithm: AES
+[12:34:56][INFO] (CRYPTO) Key: [byte array]
+[12:34:56][INFO] (CRYPTO) Key(HEX): A1B2C3D4E5F6...
+[12:34:56][INFO] (CRYPTO) Key(B64): a1b2c3d4e5f6...
+[12:34:56][INFO] (CRYPTO) IV: [byte array]
 [12:34:56][INFO] (CRYPTO) IV(HEX): 0102030405060708...
 [12:34:56][INFO] (CRYPTO) IV(B64): AAECAwQFBgcICQ==
-[12:34:56][INFO] (CRYPTO) 明文样本: 需要加密的数据
-[12:34:56][INFO] (CRYPTO) 密文样本: [加密后数据]
+[12:34:56][INFO] (CRYPTO) Plaintext Sample: Data to be encrypted
+[12:34:56][INFO] (CRYPTO) Ciphertext Sample: [Encrypted data]
 [12:34:56][INFO] (CRYPTO) ==========================
 ```
 
-#### 优点与局限性
+#### Advantages and Limitations
 
-**优点：**
+**Advantages:**
 - Comprehensive monitoring of all encryption/decryption operations
 - Automatic extraction of keys, IVs and sensitive information
 - Support for mainstream encryption libraries and custom implementations
 - Highly configurable, can adjust monitoring granularity as needed
 - Real-time view of encryption parameters without reverse engineering
 
-**局限性：**
+**Limitations:**
 - Cannot directly monitor Native layer encryption (needs to be combined with native_function.js)
 - Heavy monitoring may impact application performance
 - May capture incomplete keys for rapidly changing memory keys
 - Some heavily obfuscated code might require manual adjustment of hook points
-- Large volume of encryption operations will generate significant logs
 
-### 2. 反调试绕过模块：modules/anti_debug.js
+### 2. Anti-Debug Bypass Module: modules/anti_debug.js
 
-#### 功能概述
+#### Feature Overview
 
-自动绕过各种反调试、反Root、反模拟器、反注入、反抓包等检测机制。
+Automatically bypasses various anti-debugging, anti-root, anti-emulator, anti-injection, and anti-packet capture detection mechanisms.
 
-#### 详细参数说明
+#### Detailed Parameter Description
 
-反调试绕过模块支持以下参数配置，可在加载模块时通过API设置：
+The anti-debug bypass module supports the following parameter configurations, which can be set through the API when loading the module:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -253,7 +255,7 @@ cryptoModule.addCustomHook("com.bankapp.security.CryptoUtil", "encrypt");
 | `logBypassedDetections` | Boolean | true | Whether to log bypassed detections |
 | `bypassNativeDetection` | Boolean | true | Whether to bypass Native layer detection |
 
-#### 参数配置方法
+#### Parameter Configuration Method
 
 ```javascript
 // Manually load and configure anti-debug bypass module
@@ -289,45 +291,45 @@ antiDebugModule.addCustomHook({
 });
 ```
 
-#### 绕过检测类型
+#### Bypass Detection Types
 
-- **Java层反调试绕过**：
+- **Java Layer Anti-Debug Bypass**:
   - `Debug.isDebuggerConnected()`
   - `ApplicationInfo.FLAG_DEBUGGABLE`
-  - `System.exit()` 阻止应用强制退出
-  - `Process.killProcess()` 阻止进程终止
+  - `System.exit()` to prevent application from force exiting
+  - `Process.killProcess()` to prevent process termination
 
-- **Root检测绕过**：
-  - 敏感文件检测(`/system/bin/su`等)
-  - Runtime.exec("su")检测
-  - Shell.exec检测
+- **Root Detection Bypass**:
+  - Sensitive file detection (`/system/bin/su` etc.)
+  - Runtime.exec("su") detection
+  - Shell.exec detection
 
-- **模拟器检测绕过**：
-  - Build属性检测(修改BRAND,MODEL等)
-  - TelephonyManager相关检测(IMEI等)
-  - 传感器检测
+- **Emulator Detection Bypass**:
+  - Build attribute detection (modifying BRAND,MODEL etc.)
+  - TelephonyManager related detection (IMEI etc.)
+  - Sensor detection
 
-- **Frida/Xposed检测绕过**：
-  - 关键字符串检测
-  - 敏感文件检测
-  - /proc/self/maps检测
-  - 反射调用检测
+- **Frida/Xposed Detection Bypass**:
+  - Keyword detection
+  - Sensitive file detection
+  - /proc/self/maps detection
+  - Reflection call detection
 
-- **SSL Pinning绕过**：
-  - X509TrustManager绕过
-  - OkHttp证书固定绕过
-  - TrustManagerImpl绕过
+- **SSL Pinning Bypass**:
+  - X509TrustManager bypass
+  - OkHttp certificate pinning bypass
+  - TrustManagerImpl bypass
 
-- **签名校验绕过**：
-  - PackageManager.getPackageInfo绕过
-  - Signature.equals绕过
+- **Signature Verification Bypass**:
+  - PackageManager.getPackageInfo bypass
+  - Signature.equals bypass
 
-- **Native层检测绕过**：
-  - ptrace反调试绕过
-  - /proc/maps检测绕过
-  - 原生层Root检测绕过
+- **Native Layer Detection Bypass**:
+  - ptrace anti-debug bypass
+  - /proc/maps detection bypass
+  - Native layer Root detection bypass
 
-#### 最佳使用方法
+#### Best Usage Methods
 
 **Scenario 1: Standard Application Analysis**
 ```javascript
@@ -367,9 +369,9 @@ antiDebugModule.enableTimingDetectionBypass(true);  // Bypass timing detection
 antiDebugModule.disableLogEvents(true);  // Avoid excessive detection event logging
 ```
 
-#### 优点与局限性
+#### Advantages and Limitations
 
-**优点：**
+**Advantages:**
 - Comprehensive coverage of common Android anti-debugging/anti-root/anti-emulator detection mechanisms
 - Modular design, can enable/disable specific bypass features as needed
 - Automatically handles Native and Java layer detections
@@ -378,7 +380,7 @@ antiDebugModule.disableLogEvents(true);  // Avoid excessive detection event logg
 - Can dynamically add custom bypass rules for specific applications
 - Records bypassed detection points for protection mechanism analysis
 
-**局限性：**
+**Limitations:**
 - May require additional configuration for highly customized protection schemes
 - Some advanced anti-debugging techniques may require Native modules
 - Bypassing many detection points could cause performance degradation
@@ -387,15 +389,15 @@ antiDebugModule.disableLogEvents(true);  // Avoid excessive detection event logg
 - Excessive bypassing may cause application functionality issues in extreme cases
 - Latest anti-debugging techniques may require module updates
 
-### 3. 网络监控模块：modules/network_monitor.js
+### 3. Network Monitoring Module: modules/network_monitor.js
 
-#### 功能概述
+#### Feature Overview
 
-监控和记录HTTP/HTTPS请求和响应，WebSocket通信，Socket通信等网络活动。
+Monitors and records HTTP/HTTPS requests and responses, WebSocket communications, Socket communications, etc.
 
-#### 详细参数说明
+#### Detailed Parameter Description
 
-网络监控模块支持以下参数配置，可在加载模块时通过API设置：
+The network monitoring module supports the following parameter configurations, which can be set through the API when loading the module:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -409,7 +411,7 @@ antiDebugModule.disableLogEvents(true);  // Avoid excessive detection event logg
 | `excludeUrlPatterns` | RegExp[] | [] | Patterns to exclude specific URLs |
 | `logBinaryResponses` | Boolean | false | Whether to log binary response data |
 
-#### 参数配置方法
+#### Parameter Configuration Method
 
 ```javascript
 // Manually load and configure network monitoring module
@@ -437,21 +439,21 @@ networkModule.enableResponseBodyLogging(false);  // Don't log response bodies
 networkModule.enableBinaryResponseLogging(true); // Log binary responses
 ```
 
-#### 支持的网络API
+#### Supported Network APIs
 
-- **HTTP客户端**：
+- **HTTP Clients**:
   - OkHttp3
   - HttpURLConnection
   - Volley
 
-- **Web组件**：
+- **Web Components**:
   - WebView
   - WebSocket
 
-- **底层通信**：
+- **Low-Level Communication**:
   - Socket
 
-#### 最佳使用方法
+#### Best Usage Methods
 
 **Scenario 1: General Monitoring**
 ```javascript
@@ -490,9 +492,9 @@ networkModule.addExcludeUrlPattern(/\.(jpg|png|gif|css|js)$/);
 networkModule.setMaxBodySize(1024);
 ```
 
-#### 优点与局限性
+#### Advantages and Limitations
 
-**优点：**
+**Advantages:**
 - Comprehensive monitoring of all application network communications, including HTTPS encrypted traffic
 - Rich filtering functionality, can customize monitoring for specific needs
 - Automatically extracts and parses common authentication tokens (such as JWT)
@@ -500,7 +502,7 @@ networkModule.setMaxBodySize(1024);
 - Can simultaneously monitor multiple types of network communication in the application
 - Automatically bypasses SSL certificate pinning without additional configuration
 
-**局限性：**
+**Limitations:**
 - Large numbers of network requests will generate large logs, potentially affecting performance
 - Complex binary protocols require additional parsers to understand content
 - Some highly customized network libraries may require additional hook points
@@ -508,15 +510,15 @@ networkModule.setMaxBodySize(1024);
 - May not support some non-standard WebSocket implementations or custom protocols
 - Monitoring all response bodies may increase memory usage
 
-### 4. 敏感API监控模块：modules/sensitive_api.js
+### 4. Sensitive API Monitoring Module: modules/sensitive_api.js
 
-#### 功能概述
+#### Feature Overview
 
-监控应用对敏感API的调用，如文件访问、剪贴板操作、定位服务、相机等。
+Monitors calls to sensitive APIs in the application, such as file access, clipboard operations, location services, camera, etc.
 
-#### 详细参数说明
+#### Detailed Parameter Description
 
-敏感API监控模块支持以下参数配置：
+The sensitive API monitoring module supports the following parameter configurations:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -531,7 +533,7 @@ networkModule.setMaxBodySize(1024);
 | `customHooks` | Object[] | [] | Custom API monitoring configuration |
 | `excludeMethods` | String[] | [] | Methods to exclude from monitoring |
 
-#### 支持的API类别
+#### Supported API Categories
 
 The module categorizes monitored APIs into the following categories, each can be enabled or disabled individually:
 
@@ -554,7 +556,7 @@ The module categorizes monitored APIs into the following categories, each can be
 17. **WEBVIEW**: WebView-related operations
 18. **IPC**: Inter-process communications
 
-#### 参数配置方法
+#### Parameter Configuration Method
 
 ```javascript
 // Manually load and configure sensitive API monitoring module
@@ -586,7 +588,7 @@ apiModule.addCustomHook({
 });
 ```
 
-#### 最佳使用方法
+#### Best Usage Methods
 
 **Scenario 1: General Monitoring**
 ```javascript
@@ -629,9 +631,9 @@ apiModule.enableOnly([
 apiModule.setMaxParameterSize(4096);  // Increase parameter size logging
 ```
 
-#### 优点与局限性
+#### Advantages and Limitations
 
-**优点：**
+**Advantages:**
 - Comprehensive coverage of Android sensitive APIs, clearly categorized for auditing
 - Modular design, can enable/disable specific categories as needed
 - Supports logging parameters and return values for in-depth analysis
@@ -640,7 +642,7 @@ apiModule.setMaxParameterSize(4096);  // Increase parameter size logging
 - Can dynamically add custom monitoring points for specific applications
 - Low-overhead configuration options suitable for long-term monitoring
 
-**局限性：**
+**Limitations:**
 - Monitoring many APIs will generate large logs, potentially affecting performance
 - Some sensitive APIs may be implemented at the Native layer, requiring native_function.js
 - For highly obfuscated apps, may need manual adjustment of class/method names
@@ -649,15 +651,15 @@ apiModule.setMaxParameterSize(4096);  // Increase parameter size logging
 - Some API parameters or return values may be too complex for direct logging
 - Some system-level APIs may differ between Android versions, requiring adaptation
 
-### 5. 自动提取密钥模块：modules/auto_extractor.js
+### 5. Automatic Key Extraction Module: modules/auto_extractor.js
 
-#### 功能概述
+#### Feature Overview
 
-自动识别、提取和保存应用中的加密密钥、令牌、API密钥和配置信息。
+Automatically identifies, extracts, and saves encryption keys, tokens, API keys, and configuration information from the application.
 
-#### 详细参数说明
+#### Detailed Parameter Description
 
-自动提取密钥模块支持以下参数配置：
+The automatic key extraction module supports the following parameter configurations:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -673,7 +675,7 @@ apiModule.setMaxParameterSize(4096);  // Increase parameter size logging
 | `customExtractionRules` | Object[] | [] | Custom extraction rules |
 | `classPatterns` | String[] | [] | Class name patterns for static field extraction |
 
-#### 提取源
+#### Extraction Sources
 
 The module extracts keys from the following sources:
 
@@ -707,7 +709,7 @@ The module extracts keys from the following sources:
    - Identifies hardcoded keys matching specific formats
    - Examples: Base64 encoded strings, hexadecimal strings, etc.
 
-#### 参数配置方法
+#### Parameter Configuration Method
 
 ```javascript
 // Manually load and configure auto key extraction module
@@ -745,7 +747,7 @@ extractorModule.setClassPatterns([
 ]);
 ```
 
-#### 密钥识别规则
+#### Key Identification Rules
 
 The module uses the following rules to identify potential keys:
 
@@ -770,7 +772,7 @@ The module uses the following rules to identify potential keys:
    - High entropy (highly random strings)
    - Matches specific platform key formats (like AWS, Firebase, etc.)
 
-#### 最佳使用方法
+#### Best Usage Methods
 
 **Scenario 1: General Monitoring**
 ```javascript
@@ -815,9 +817,9 @@ extractorModule.setMinKeyLength(8);  // AES keys might only be 16 bytes
 extractorModule.addClassPatterns(["com.example.app.crypto", "com.example.security"]);  // Focus on specific packages
 ```
 
-#### 优点与局限性
+#### Advantages and Limitations
 
-**优点：**
+**Advantages:**
 - Fully automatic extraction of various keys and sensitive information from applications
 - Comprehensive analysis from multiple sources increases detection rate
 - Intelligent identification of common key formats and characteristics
@@ -826,7 +828,7 @@ extractorModule.addClassPatterns(["com.example.app.crypto", "com.example.securit
 - Automatic deduplication and classification improves extraction quality
 - Can view extraction progress in real-time without waiting for application completion
 
-**局限性：**
+**Limitations:**
 - May produce false positives, misidentifying ordinary strings as keys
 - Highly encrypted or obfuscated keys may be difficult to identify
 - Too many extraction rules may affect application performance
@@ -1119,101 +1121,101 @@ Object.keys(customDumperConfig).forEach(key => {
 });
 ```
 
-## 备份脚本目录 (backup/)
+## Backup Script Directory (backup/)
 
-备份目录包含了拆分的单一功能脚本文件，可以根据需要单独使用，无需加载整个框架。
+The backup directory contains split single-function script files that can be used individually as needed, without loading the entire framework.
 
-### Hook类脚本
+### Hook Class Scripts
 
-**文件列表**:
-- **hook_java_method.js**: 通用Java方法Hook脚本
-  - 功能: 拦截任意Java方法调用
-  - 用法: `frida -U -f com.example.app -l backup/hook_java_method.js`
+**File List**:
+- **hook_java_method.js**: General Java method hook script
+  - Function: Intercepts arbitrary Java method calls
+  - Usage: `frida -U -f com.example.app -l backup/hook_java_method.js`
   
-- **hook_native_function.js**: 原生函数Hook脚本
-  - 功能: 拦截原生库函数调用
-  - 用法: `frida -U -f com.example.app -l backup/hook_native_function.js`
+- **hook_native_function.js**: Native function hook script
+  - Function: Intercepts calls to native library functions
+  - Usage: `frida -U -f com.example.app -l backup/hook_native_function.js`
   
-- **hook_constructor.js**: 构造函数Hook脚本
-  - 功能: 拦截类的实例化
-  - 用法: `frida -U -f com.example.app -l backup/hook_constructor.js`
+- **hook_constructor.js**: Constructor hook script
+  - Function: Intercepts instance creation
+  - Usage: `frida -U -f com.example.app -l backup/hook_constructor.js`
 
-- **hook_all_methods.js**: 类所有方法Hook脚本
-  - 功能: 监控类的所有方法调用
-  - 用法: `frida -U -f com.example.app -l backup/hook_all_methods.js`
+- **hook_all_methods.js**: Hook script for all methods of a class
+  - Function: Monitors all method calls of a class
+  - Usage: `frida -U -f com.example.app -l backup/hook_all_methods.js`
 
-### 反调试相关脚本
+### Anti-Debug Related Scripts
 
-**文件列表**:
-- **hook_anti_debug.js**: 简化版反调试绕过
-  - 功能: 绕过基本的调试检测
-  - 用法: `frida -U -f com.example.app -l backup/hook_anti_debug.js`
+**File List**:
+- **hook_anti_debug.js**: Simplified anti-debug bypass
+  - Function: Bypasses basic debugging detection
+  - Usage: `frida -U -f com.example.app -l backup/hook_anti_debug.js`
   
-- **bypass_ssl_pinning.js**: SSL证书固定绕过
-  - 功能: 绕过常见的证书固定实现
-  - 用法: `frida -U -f com.example.app -l backup/bypass_ssl_pinning.js`
+- **bypass_ssl_pinning.js**: SSL certificate pinning bypass
+  - Function: Bypasses common certificate pinning implementations
+  - Usage: `frida -U -f com.example.app -l backup/bypass_ssl_pinning.js`
 
-- **hook_ptrace.js**: ptrace反调试绕过
-  - 功能: 绕过Native层ptrace检测
-  - 用法: `frida -U -f com.example.app -l backup/hook_ptrace.js`
+- **hook_ptrace.js**: ptrace anti-debug bypass
+  - Function: Bypasses Native layer ptrace detection
+  - Usage: `frida -U -f com.example.app -l backup/hook_ptrace.js`
 
-- **hook_frida_detection.js**: Frida检测绕过
-  - 功能: 绕过常见的Frida检测机制
-  - 用法: `frida -U -f com.example.app -l backup/hook_frida_detection.js`
+- **hook_frida_detection.js**: Frida detection bypass
+  - Function: Bypasses common Frida detection mechanisms
+  - Usage: `frida -U -f com.example.app -l backup/hook_frida_detection.js`
 
-- **hook_debug_detect_flags.js**: 调试标记检测绕过
-  - 功能: 绕过FLAG_DEBUGGABLE等检测
-  - 用法: `frida -U -f com.example.app -l backup/hook_debug_detect_flags.js`
+- **hook_debug_detect_flags.js**: Anti-debugging detection bypass
+  - Function: Bypasses FLAG_DEBUGGABLE etc. detection
+  - Usage: `frida -U -f com.example.app -l backup/hook_debug_detect_flags.js`
 
-### 信息提取脚本
+### Information Extraction Scripts
 
-**文件列表**:
-- **dump_stack.js**: 堆栈跟踪脚本
-  - 功能: 打印当前执行堆栈
-  - 用法: `frida -U -f com.example.app -l backup/dump_stack.js`
+**File List**:
+- **dump_stack.js**: Stack trace script
+  - Function: Prints the current execution stack
+  - Usage: `frida -U -f com.example.app -l backup/dump_stack.js`
   
-- **hook_okhttp_request.js**: OkHttp请求提取
-  - 功能: 监控OkHttp网络请求
-  - 用法: `frida -U -f com.example.app -l backup/hook_okhttp_request.js`
+- **hook_okhttp_request.js**: OkHttp request extraction
+  - Function: Monitors OkHttp network requests
+  - Usage: `frida -U -f com.example.app -l backup/hook_okhttp_request.js`
 
-- **hook_okhttp_response.js**: OkHttp响应提取
-  - 功能: 监控OkHttp响应
-  - 用法: `frida -U -f com.example.app -l backup/hook_okhttp_response.js`
+- **hook_okhttp_response.js**: OkHttp response extraction
+  - Function: Monitors OkHttp responses
+  - Usage: `frida -U -f com.example.app -l backup/hook_okhttp_response.js`
 
-- **hook_base64_decode.js**: Base64解码监控
-  - 功能: 监控Base64编解码操作
-  - 用法: `frida -U -f com.example.app -l backup/hook_base64_decode.js`
+- **hook_base64_decode.js**: Base64 decoding monitoring
+  - Function: Monitors Base64 encoding/decoding operations
+  - Usage: `frida -U -f com.example.app -l backup/hook_base64_decode.js`
 
-- **hook_cipher.js**: 加密算法监控
-  - 功能: 监控Cipher加密解密
-  - 用法: `frida -U -f com.example.app -l backup/hook_cipher.js`
+- **hook_cipher.js**: Encryption algorithm monitoring
+  - Function: Monitors Cipher encryption/decryption
+  - Usage: `frida -U -f com.example.app -l backup/hook_cipher.js`
 
-- **hook_message_digest.js**: 消息摘要监控
-  - 功能: 监控哈希计算
-  - 用法: `frida -U -f com.example.app -l backup/hook_message_digest.js`
+- **hook_message_digest.js**: Message digest monitoring
+  - Function: Monitors hash calculation
+  - Usage: `frida -U -f com.example.app -l backup/hook_message_digest.js`
 
-### 其他实用脚本
+### Other Utility Scripts
 
-**文件列表**:
-- **hook_system_exit.js**: 阻止应用退出
-  - 功能: 拦截System.exit调用
-  - 用法: `frida -U -f com.example.app -l backup/hook_system_exit.js`
+**File List**:
+- **hook_system_exit.js**: Prevents application exit
+  - Function: Intercepts System.exit calls
+  - Usage: `frida -U -f com.example.app -l backup/hook_system_exit.js`
 
-- **hook_build_model.js**: 修改设备型号
-  - 功能: 修改Build.MODEL返回值
-  - 用法: `frida -U -f com.example.app -l backup/hook_build_model.js`
+- **hook_build_model.js**: Modifies Build.MODEL return value
+  - Function: Modifies Build.MODEL return value
+  - Usage: `frida -U -f com.example.app -l backup/hook_build_model.js`
   
-- **hook_webview_loadurl.js**: WebView URL监控
-  - 功能: 监控WebView加载的URL
-  - 用法: `frida -U -f com.example.app -l backup/hook_webview_loadurl.js`
+- **hook_webview_loadurl.js**: WebView URL monitoring
+  - Function: Monitors WebView loaded URLs
+  - Usage: `frida -U -f com.example.app -l backup/hook_webview_loadurl.js`
 
-- **hook_sharedpreferences.js**: 应用配置监控
-  - 功能: 监控SharedPreferences读写
-  - 用法: `frida -U -f com.example.app -l backup/hook_sharedpreferences.js`
+- **hook_sharedpreferences.js**: Application configuration monitoring
+  - Function: Monitors reading and writing of SharedPreferences
+  - Usage: `frida -U -f com.example.app -l backup/hook_sharedpreferences.js`
 
-- **hook_network_proxy.js**: 网络代理配置
-  - 功能: 修改网络代理设置
-  - 用法: `frida -U -f com.example.app -l backup/hook_network_proxy.js`
+- **hook_network_proxy.js**: Network proxy configuration
+  - Function: Modifies network proxy settings
+  - Usage: `frida -U -f com.example.app -l backup/hook_network_proxy.js`
 
 ### New Addition: System Function Monitoring Module (system_api_monitor.js)
 
@@ -1489,58 +1491,58 @@ This scenario can reveal the application's data processing flow, especially when
 
 These real-world use cases demonstrate the various applications of the system function monitoring module, from data flow analysis to security inspection to reverse engineering assistance, providing comprehensive monitoring capabilities.
 
-## 示例脚本: examples/usage_example.js
+## Example Script: examples/usage_example.js
 
-示例脚本演示如何针对特定应用场景使用本框架。
+Example script demonstrates how to use this framework for specific application scenarios.
 
-### 示例功能
+### Example Features
 
-- 监控特定类的所有加密相关方法
-- 过滤特定域名的网络请求
-- 提取SharedPreferences中的密钥
-- 绕过特定的签名检测
-- 提取JWT令牌并解析内容
+- Monitors all encryption-related methods of a specific class
+- Filters network requests to specific domains
+- Extracts keys from SharedPreferences
+- Bypasses specific signature checks
+- Extracts JWT tokens and parses their content
 
-### 使用方法
+### Usage
 
 ```bash
-# 直接运行示例脚本
+# Run the example script directly
 frida -U -f com.example.app -l examples/usage_example.js --no-pause
 ```
 
-### 示例代码片段
+### Example Code Snippet
 
-**监控特定类的所有加密方法**:
+**Monitors all encryption methods of a specific class**:
 ```javascript
 Java.perform(function() {
     try {
-        // 监控自定义加密工具类
+        // Monitor custom encryption utility class
         var CustomEncryptionUtil = Java.use("com.example.app.security.CustomEncryptionUtil");
         
-        // 获取所有方法
+        // Get all methods
         var methods = CustomEncryptionUtil.class.getDeclaredMethods();
         methods.forEach(function(method) {
             var methodName = method.getName();
             
-            // 过滤加密相关方法
+            // Filter encryption-related methods
             if (methodName.indexOf("encrypt") !== -1 || 
                 methodName.indexOf("decrypt") !== -1 || 
                 methodName.indexOf("hash") !== -1) {
                 
-                // 监控所有重载
+                // Monitor all overloads
                 CustomEncryptionUtil[methodName].overloads.forEach(function(overload) {
                     overload.implementation = function() {
-                        console.log("[*] 调用 " + methodName);
+                        console.log("[*] Invoking " + methodName);
                         
-                        // 打印参数
+                        // Print parameters
                         for (var i = 0; i < arguments.length; i++) {
                             console.log("    参数" + i + ": " + arguments[i]);
                         }
                         
-                        // 调用原方法
+                        // Call original method
                         var ret = this[methodName].apply(this, arguments);
                         
-                        // 打印返回值
+                        // Print return value
                         console.log("    返回: " + ret);
                         return ret;
                     };
@@ -1553,21 +1555,21 @@ Java.perform(function() {
 });
 ```
 
-**提取JWT令牌**:
+**Extracts JWT tokens**:
 ```javascript
-// 查找请求中的JWT Token
+// Find JWT token in requests
 var patterns = [
-    /Bearer\s+([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/,  // Authorization 头
-    /"token"\s*:\s*"([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)"/  // JSON中的token字段
+    /Bearer\s+([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)/,  // Authorization header
+    /"token"\s*:\s*"([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)"/  // token field in JSON
 ];
 
-// Hook OkHttp的请求构建
+// Hook OkHttp's request builder
 var Request$Builder = Java.use("okhttp3.Request$Builder");
 Request$Builder.build.implementation = function() {
     var request = this.build();
     var headers = request.headers();
     
-    // 检查Authorization头
+    // Check Authorization header
     var authHeader = headers.get("Authorization");
     if (authHeader) {
         for (var i = 0; i < patterns.length; i++) {
@@ -1575,7 +1577,7 @@ Request$Builder.build.implementation = function() {
             if (matches && matches.length > 1) {
                 console.log("[*] 发现JWT Token: " + matches[1]);
                 
-                // 解码JWT的各部分
+                // Decode JWT parts
                 var parts = matches[1].split(".");
                 if (parts.length === 3) {
                     try {
@@ -1595,134 +1597,134 @@ Request$Builder.build.implementation = function() {
 };
 ```
 
-## 高级使用方法
+## Advanced Usage
 
-### 自定义日志级别
+### Custom Log Level
 
-修改`frida_master.js`中的配置：
+Modify the configuration in `frida_master.js`:
 
 ```javascript
 var config = {
-    logLevel: 'debug',  // 改为'debug'以显示更详细的信息
-    // 其他配置...
+    logLevel: 'debug',  // Changed to 'debug' for more detailed information
+    // Other configurations...
 };
 ```
 
-### 禁用特定模块
+### Disable Specific Modules
 
-如果只需要某些功能，可以在`frida_master.js`中的`loadModules()`函数中注释掉不需要的模块：
+If only certain features are needed, modules can be commented out in the `loadModules()` function in `frida_master.js`:
 
 ```javascript
 function loadModules() {
-    // 加载加密模块
+    // Load crypto module
     require('./modules/crypto_monitor.js')(config, logger, utils);
     
-    // 加载网络模块
+    // Load network module
     require('./modules/network_monitor.js')(config, logger, utils);
     
-    // 注释掉不需要的模块
+    // Comment out unnecessary modules
     // require('./modules/anti_debug.js')(config, logger, utils);
     // require('./modules/sensitive_api.js')(config, logger, utils);
     // require('./modules/auto_extractor.js')(config, logger, utils);
 }
 ```
 
-### 自定义过滤器
+### Custom Filters
 
-可以配置各种过滤器来减少日志输出并专注于特定内容：
+Various filters can be configured to reduce log output and focus on specific content:
 
 ```javascript
-// 添加网络过滤器
+// Add network filter
 var networkModule = require('./modules/network_monitor.js')(config, logger, utils);
 networkModule.addUrlFilter("api.example.com");
 networkModule.addContentTypeFilter("application/json");
 
-// 添加加密过滤器
+// Add crypto filter
 var cryptoModule = require('./modules/crypto_monitor.js')(config, logger, utils);
-cryptoModule.setAlgorithmFilter(["AES", "RSA"]); // 只监控这些算法
+cryptoModule.setAlgorithmFilter(["AES", "RSA"]); // Only monitor these algorithms
 ```
 
-### 保存控制台输出
+### Save Console Output
 
-您可以将Frida的输出保存到文件：
+You can save Frida's output to a file:
 
 ```bash
 frida -U -f com.example.app -l frida_master.js --no-pause > frida_output.txt
 ```
 
-### 与其他工具结合
+### Combining with Other Tools
 
-可以将提取到的数据与其他工具结合使用：
+You can use extracted data with other tools:
 
 ```bash
-# 将提取的密钥从设备拉取到电脑
+# Pull extracted keys from device to computer
 adb pull /sdcard/frida_extracted_keys.json
 
-# 将日志文件拉取到电脑
+# Pull log file from device to computer
 adb pull /sdcard/frida_log.txt
 ```
 
-## 常见问题解答
+## Common Questions and Answers
 
-### Q: 应用崩溃怎么办？
+### Q: What if the application crashes?
 
-某些应用可能对Hook敏感，可以尝试：
-1. 禁用反调试绕过: 在config中设置`bypassAllDetection: false`
+Some applications may be sensitive to Hooks, so you can try:
+1. Disable anti-debug bypass: Set `bypassAllDetection: false` in config
    ```javascript
    var config = {
-       bypassAllDetection: false,  // 禁用所有绕过功能
-       // 其他配置...
+       bypassAllDetection: false,  // Disable all bypass features
+       // Other configurations...
    };
    ```
-2. 减少Hook数量: 只加载必要的模块
-3. 使用-f强制启动模式(非附加模式)
+2. Reduce the number of Hooks: Only load necessary modules
+3. Use -f forced startup mode (non-attach mode)
 
-### Q: 如何过滤大量的日志输出？
+### Q: How to filter out a large amount of log output?
 
-1. 调整日志级别:
+1. Adjust log level:
    ```javascript
    var config = {
-       logLevel: 'warn',  // 只显示警告和错误
-       // 其他配置...
+       logLevel: 'warn',  // Only show warnings and errors
+       // Other configurations...
    };
    ```
-2. 使用grep过滤:
+2. Use grep to filter:
    ```bash
    frida -U -f com.example.app -l frida_master.js --no-pause | grep CRYPTO
    ```
 
-### Q: 为什么某些加密操作没被捕获？
+### Q: Why are some encryption operations not captured?
 
-可能的原因：
-1. 应用使用了Native层加密，可以使用backup目录中的`hook_native_function.js`针对特定原生函数进行Hook
-2. 应用使用了自定义加密库，需要特定Hook
-3. 应用使用了代码混淆，类名和方法名可能改变
+Possible reasons:
+1. The application uses Native layer encryption, which can be hooked using `hook_native_function.js` in the backup directory
+2. The application uses custom encryption libraries, requiring specific hooks
+3. The application uses code obfuscation, class names and method names may change
 
-### Q: 如何扩展框架功能？
+### Q: How to extend the framework functionality?
 
-创建新的模块文件，遵循相同的结构：
+Create new module files, following the same structure:
 ```javascript
 module.exports = function(config, logger, utils) {
     var tag = "MY_MODULE";
     logger.info(tag, "模块初始化");
     
-    // 实现功能...
+    // Implement functionality...
     
     return {
-        // 导出API...
+        // Export APIs...
     };
 };
 ```
 
-然后在`frida_master.js`的`loadModules()`中加载它。
+Then load it in `frida_master.js`'s `loadModules()` function.
 
-## 许可证
+## License
 
-本项目采用 MIT 许可证。
+This project is licensed under the MIT License.
 
 ---
 
-**免责声明**: 本框架仅用于安全研究和授权测试目的。使用前请确保您有合法权限测试目标应用。对于任何滥用导致的问题，作者不承担责任。 
+**Disclaimer**: This framework is only for security research and authorized testing purposes. Please ensure you have legal permission to test the target application. For any misuse, the author is not responsible. 
 
 ## Module Startup and Usage Guide
 
@@ -1905,7 +1907,7 @@ Startup command:
 frida -U -f com.example.app -l sensitive_api_starter.js --no-pause
 ```
 
-#### 5. Auto Extractor Module
+#### 5. Automatic Key Extraction Module
 
 ```javascript
 // extractor_starter.js
@@ -1919,7 +1921,7 @@ Java.perform(function() {
         autoExtractKeys: true
     };
     
-    // Load auto extractor module
+    // Load automatic key extraction module
     var extractorModule = require('./modules/auto_extractor.js')(config, logger, utils);
     
     // Optional: Set key extraction callback
@@ -1927,7 +1929,7 @@ Java.perform(function() {
         console.log(`[*] New key extracted: ${keyInfo.type} - ${keyInfo.value}`);
     });
     
-    console.log("[+] Auto extractor module started");
+    console.log("[+] Automatic key extraction module started");
 });
 
 // Trigger loading
