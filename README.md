@@ -258,6 +258,58 @@ Memory.writeByteArray(addr, [0x90, 0x90, 0x90]);
 - [完整API参考](docs/api_reference.md)
 - [代码详细解释](CODE-DETAILS.md) - 提供所有示例代码的详细解释和使用场景
 
+### Frida Hook 脚本大全
+
+本项目包含了一系列实用的 Frida Hook 脚本，可以帮助你快速开始 Android 应用分析：
+
+1. **[基础API拦截](frida_hooks/基础API拦截.js)** - 拦截常见的Android API调用
+2. **[SSL证书绕过](frida_hooks/SSL证书绕过.js)** - 绕过SSL证书验证，方便抓包分析HTTPS流量
+3. **[反调试检测绕过](frida_hooks/反调试检测绕过.js)** - 绕过应用中的反调试检测机制
+4. **[加密解密函数Hook](frida_hooks/加密解密函数Hook.js)** - 拦截常见的加密解密函数，获取明文数据
+5. **[网络请求拦截](frida_hooks/网络请求拦截.js)** - 拦截HTTP/HTTPS网络请求和响应
+6. **[文件操作拦截](frida_hooks/文件操作拦截.js)** - 监控文件读写、删除等操作
+7. **[WebView注入](frida_hooks/WebView注入.js)** - 向WebView注入JavaScript代码
+8. **[界面元素监控](frida_hooks/界面元素监控.js)** - 监控和修改界面元素属性和事件
+9. **[SQLite数据库操作拦截](frida_hooks/SQLite数据库操作拦截.js)** - 监控数据库查询和修改操作
+10. **[SharedPreferences操作拦截](frida_hooks/SharedPreferences操作拦截.js)** - 监控配置文件的读写操作
+11. **[动态加载监控](frida_hooks/动态加载监控.js)** - 监控动态加载的类和资源
+12. **[JNI函数调用监控](frida_hooks/JNI函数调用监控.js)** - 监控Java与Native层之间的调用
+13. **[系统属性获取拦截](frida_hooks/系统属性获取拦截.js)** - 拦截系统属性的读取操作
+14. **[定位信息模拟](frida_hooks/定位信息模拟.js)** - 模拟GPS定位信息
+15. **[相机操作拦截](frida_hooks/相机操作拦截.js)** - 监控相机相关API调用
+16. **[Root检测绕过](frida_hooks/Root检测绕过.js)** - 绕过应用的Root检测机制
+17. **[Native层函数追踪](frida_hooks/Native层函数追踪.js)** - 追踪Native层函数的调用
+18. **[内存搜索修改](frida_hooks/内存搜索修改.js)** - 在内存中搜索和修改特定值
+19. **[应用保护机制绕过](frida_hooks/应用保护机制绕过.js)** - 绕过各种应用保护机制
+20. **[应用启动流程监控](frida_hooks/应用启动流程监控.js)** - 监控应用启动过程和性能
+
+### 使用方法
+
+1. 确保已正确安装Frida并启动frida-server
+2. 连接到目标设备
+3. 使用以下命令注入脚本：
+
+```bash
+# 附加到运行中的应用
+frida -U -l frida_hooks/脚本名称.js -n "应用名称" 
+
+# 或使用包名启动应用
+frida -U -l frida_hooks/脚本名称.js -f 应用包名 --no-pause
+```
+
+4. 观察控制台输出的信息
+
+### 贡献
+
+欢迎提交Pull Request来完善这个项目。如果你有好的脚本想要分享，请遵循以下格式：
+1. 添加详细的注释说明功能和使用方法
+2. 确保脚本经过测试且能正常工作
+3. 更新README.md添加你的脚本信息
+
+### 免责声明
+
+本项目仅供安全研究和教育目的使用。使用这些脚本分析未经授权的应用可能违反法律法规。请确保在合法的情况下使用这些工具。
+
 ## 贡献与反馈
 
 如果您有改进建议或发现文档中的错误，请提交Issue或Pull Request。
