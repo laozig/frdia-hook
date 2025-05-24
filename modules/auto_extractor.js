@@ -1,7 +1,50 @@
 /*
- * 自动提取密钥模块
- * 功能：自动识别、提取和保存应用中的加密密钥、令牌和配置信息
- * 支持：自动保存密钥到文件，识别常见密钥模式，监控密钥生命周期
+ * 脚本名称：auto_extractor.js
+ * 功能描述：自动识别、提取和保存应用中的加密密钥、令牌和敏感配置信息
+ * 
+ * 适用场景：
+ *   - 提取应用中的API密钥、Token等敏感凭证
+ *   - 自动发现配置文件中的密钥和秘密信息
+ *   - 监控网络请求中的授权信息
+ *   - 提取SharedPreferences中存储的密钥
+ *   - 识别应用代码中硬编码的敏感字符串
+ *   - 识别和记录密钥生成过程
+ *
+ * 使用方法：
+ *   1. 可通过frida_master.js主入口文件加载(推荐)
+ *   2. 也可单独使用: frida -U -f 目标应用包名 -l auto_extractor.js --no-pause
+ *   3. 或者 frida -U --attach-pid 目标进程PID -l auto_extractor.js
+ *   4. 提取的密钥和敏感信息会自动保存到/sdcard/frida_extracted_keys.json
+ *
+ * 启动方式说明：
+ *   - -U: 使用USB连接的设备
+ *   - -f: 指定以spawn方式启动的应用包名
+ *   - --attach-pid: 附加到已运行的进程
+ *   - --no-pause: 注入后不暂停应用执行
+ *
+ * 工作原理：
+ *   1. 静态分析:
+ *      - 扫描类加载器中所有包含关键词的类(Config, Constants, Security等)
+ *      - 自动分析静态字段，识别可能的密钥
+ *      - 使用多种模式匹配识别常见密钥格式(Base64, Hex, JWT, OAuth等)
+ *
+ *   2. 动态监控:
+ *      - 监控配置文件读取操作
+ *      - 监控网络请求中的Authorization和Cookie头
+ *      - 监控SharedPreferences存取
+ *      - 监控密钥生成函数
+ *      - 监控自定义加密函数
+ *
+ *   3. 数据处理:
+ *      - 自动判断提取数据是否为密钥
+ *      - 记录密钥来源和使用情况
+ *      - 以JSON格式保存提取的数据
+ *
+ * 注意事项：
+ *   - 需要存储权限才能将提取的密钥保存到文件
+ *   - 可能会产生误报，需要人工审核提取的密钥
+ *   - 与crypto_monitor.js配合使用效果最佳
+ *   - 密钥提取功能可通过config.autoExtractKeys开关控制
  */
 
 module.exports = function(config, logger, utils) {

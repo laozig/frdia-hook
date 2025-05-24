@@ -2,12 +2,68 @@
  * Frida全功能Hook框架使用示例
  * 
  * 本文件展示如何针对特定应用场景使用Frida框架
+ * 包含多种实用场景和定制化监控方法
+ */
+
+/**
+ * ================== 使用方法详解 ==================
+ * 
+ * 【环境准备】
+ * 1. 安装Frida命令行工具: npm install -g frida-tools
+ * 2. 在Android设备上安装frida-server:
+ *    - 下载对应版本: https://github.com/frida/frida/releases
+ *    - 推送到设备: adb push frida-server /data/local/tmp/
+ *    - 设置权限: adb shell "chmod 755 /data/local/tmp/frida-server"
+ *    - 启动服务: adb shell "/data/local/tmp/frida-server &"
+ *
+ * 【启动方式】
+ * 1. 标准注入方式
+ *    frida -U -l examples/usage_example.js -f com.target.package --no-pause
+ * 
+ * 2. 附加到运行中的进程
+ *    frida -U -l examples/usage_example.js -p <进程ID>
+ *    
+ * 3. 远程设备注入 (通过TCP连接)
+ *    frida -H 192.168.1.x:27042 -l examples/usage_example.js -f com.target.package
+ *
+ * 4. 持久化注入 (系统范围内)
+ *    frida --file examples/usage_example.js --runtime=v8 --persist
+ *
+ * 【脚本使用说明】
+ * - 本脚本包含多个使用场景示例，根据需要选择合适的部分
+ * - 默认情况下，脚本会同时监控多种功能（加密、网络请求等）
+ * - 可以注释掉不需要的功能部分以提高性能
+ * - 支持动态开关监控功能（见脚本最后部分的条件监控示例）
+ *
+ * 【功能模块说明】
+ * 1. 加密监控 - 监控应用中的加密/解密操作
+ * 2. 网络监控 - 监控HTTP/HTTPS请求和响应
+ * 3. 数据库操作 - 监控SQLite数据库读写
+ * 4. JWT令牌提取 - 识别并解析JWT格式授权令牌
+ * 5. 反调试绕过 - 绕过应用的安全检测机制
+ * 6. 条件监控 - 根据特定条件激活/关闭监控
+ *
+ * 【自定义配置】
+ * - 可修改各监控函数的参数，定制监控行为
+ * - 可结合其他Frida模块使用，例如dex_dumper.js
+ * - 可修改日志输出格式和内容
+ *
+ * 【使用场景】
+ * - 安全研究：分析应用安全机制和潜在漏洞
+ * - 逆向工程：理解应用内部工作原理
+ * - 功能扩展：修改或增强应用行为
+ * - 兼容性测试：模拟不同环境下的应用行为
  */
 
 // 1. 基本使用 - 直接加载主文件
 /*
  * 最简单的使用方式，直接加载主文件即可启用所有功能
  * 命令: frida -U -f com.example.app -l frida_master.js --no-pause
+ * 
+ * 说明:
+ * -U: 使用USB连接的设备
+ * -f: 指定以spawn方式启动的应用包名
+ * --no-pause: 注入后不暂停应用执行
  */
 
 // 2. 自定义配置 - 修改frida_master.js中的配置
@@ -15,13 +71,22 @@
  * // 示例: 在frida_master.js中修改配置
  * var config = {
  *     logLevel: 'debug',         // 改为debug以获取更详细日志
- *     fileLogging: true,
+ *     fileLogging: true,         // 启用文件日志记录
  *     logFilePath: '/sdcard/custom_frida_log.txt',  // 自定义日志路径
- *     autoExtractKeys: true,
- *     bypassAllDetection: true,
- *     colorOutput: true,
+ *     autoExtractKeys: true,     // 自动提取密钥
+ *     bypassAllDetection: true,  // 绕过所有检测机制
+ *     colorOutput: true,         // 彩色输出
  *     stackTrace: true           // 启用调用栈跟踪
  * };
+ * 
+ * 配置说明:
+ * - logLevel: 设置日志级别，可选值有'info', 'debug', 'warn', 'error'
+ * - fileLogging: 是否将日志保存到文件
+ * - logFilePath: 日志文件保存路径
+ * - autoExtractKeys: 是否自动提取加密密钥
+ * - bypassAllDetection: 是否绕过所有检测（反调试、反注入等）
+ * - colorOutput: 是否使用彩色输出日志
+ * - stackTrace: 是否显示调用栈信息
  */
 
 // 3. 场景示例: 只需加密监控和网络监控功能
@@ -35,11 +100,20 @@
  *     // require('./modules/sensitive_api.js')(config, logger, utils);
  *     // require('./modules/auto_extractor.js')(config, logger, utils);
  * }
+ * 
+ * 说明:
+ * - 这种方式可以只加载需要的模块，减少内存占用和对应用性能的影响
+ * - 特别适合只关注特定功能（如网络请求或加密操作）的分析场景
+ * - 可以根据具体需求自由组合不同的功能模块
  */
 
 // 4. 针对特定API监控的自定义脚本示例
 
 // 4.1 监控特定类的所有加密相关方法
+/*
+ * 此示例展示如何监控应用中特定加密类的所有相关方法
+ * 适用于分析自定义加密算法或关注特定安全实现的场景
+ */
 Java.perform(function() {
     try {
         // 假设我们要监控应用中的CustomEncryptionUtil类
@@ -83,6 +157,10 @@ Java.perform(function() {
 });
 
 // 4.2 监控网络请求中特定域名
+/*
+ * 此示例展示如何监控针对特定域名的所有网络请求
+ * 适用于只关注与特定服务器通信的应用分析场景
+ */
 Java.perform(function() {
     try {
         var URL = Java.use("java.net.URL");
@@ -106,6 +184,10 @@ Java.perform(function() {
 });
 
 // 4.3 提取特定SharedPreferences中的密钥
+/*
+ * 此示例展示如何从应用的SharedPreferences中提取敏感信息
+ * 适用于分析应用本地存储的API密钥、令牌等场景
+ */
 Java.perform(function() {
     try {
         // 监控SharedPreferences访问
@@ -145,6 +227,10 @@ Java.perform(function() {
 });
 
 // 4.4 绕过特定的签名检测
+/*
+ * 此示例展示如何绕过应用的签名校验机制
+ * 适用于绕过反重新打包保护、证书绑定等安全机制
+ */
 Java.perform(function() {
     try {
         var PackageManager = Java.use("android.content.pm.PackageManager");
@@ -169,8 +255,14 @@ Java.perform(function() {
 });
 
 // 5. 将通用工具函数与框架结合使用
+// 以下是一些实用的工具函数，可以在脚本中重复使用
 
 // 十六进制转换工具函数
+/**
+ * 将字节数组转换为十六进制字符串
+ * @param {byte[]} bytes - 要转换的字节数组
+ * @return {string} 十六进制字符串表示
+ */
 function bytesToHex(bytes) {
     var hex = '';
     for (var i = 0; i < bytes.length; i++) {
@@ -180,6 +272,11 @@ function bytesToHex(bytes) {
 }
 
 // Base64编码工具函数
+/**
+ * 将字符串转换为Base64编码
+ * @param {string} str - 要编码的字符串
+ * @return {string} Base64编码后的字符串，或失败时返回null
+ */
 function base64Encode(str) {
     try {
         if (Java.available) {
@@ -198,6 +295,11 @@ function base64Encode(str) {
 }
 
 // 提取完整异常堆栈
+/**
+ * 获取完整的异常堆栈信息
+ * @param {java.lang.Exception} exception - 异常对象，如不提供则创建新异常
+ * @return {string} 格式化的堆栈跟踪信息
+ */
 function getFullStackTrace(exception) {
     var Log = Java.use("android.util.Log");
     var Exception = Java.use("java.lang.Exception");
@@ -210,7 +312,10 @@ function getFullStackTrace(exception) {
 }
 
 // 6. 特定场景示例：只提取JWT Token
-
+/**
+ * 此示例展示如何仅从网络请求中提取JWT令牌
+ * 适用于只关注身份验证和授权机制的安全分析
+ */
 Java.perform(function() {
     try {
         // 查找请求中的JWT Token
@@ -254,24 +359,54 @@ Java.perform(function() {
             return request;
         };
         
-        // Hook StringRequest以检查请求体
+        // 检查请求体中的JSON数据
         try {
-            var StringRequest = Java.use("com.android.volley.toolbox.StringRequest");
-            StringRequest.deliverResponse.implementation = function(response) {
-                // 检查响应中是否包含JWT
-                if (response) {
-                    for (var i = 0; i < patterns.length; i++) {
-                        var matches = patterns[i].exec(response);
-                        if (matches && matches.length > 1) {
-                            console.log("[*] 响应中发现JWT Token: " + matches[1]);
-                        }
-                    }
-                }
+            var RequestBody = Java.use("okhttp3.RequestBody");
+            var Buffer = Java.use("okio.Buffer");
+            
+            // 如果有writeTo方法，通常意味着它是一个RequestBody
+            if (RequestBody.writeTo) {
+                var oldWriteTo = RequestBody.writeTo.overload("okio.BufferedSink");
                 
-                return this.deliverResponse(response);
-            };
+                oldWriteTo.implementation = function(sink) {
+                    try {
+                        // 复制请求体内容到缓冲区
+                        var buffer = Buffer.$new();
+                        this.writeTo(buffer);
+                        var content = buffer.readUtf8();
+                        
+                        // 检查JSON中的token
+                    for (var i = 0; i < patterns.length; i++) {
+                            var matches = patterns[i].exec(content);
+                        if (matches && matches.length > 1) {
+                                console.log("[*] 在请求体中发现JWT Token: " + matches[1]);
+                                
+                                // 分析JWT的各部分
+                                var parts = matches[1].split(".");
+                                if (parts.length === 3) {
+                                    try {
+                                        // 解码头部和负载
+                                        var header = JSON.parse(decodeJWT(parts[0]));
+                                        var payload = JSON.parse(decodeJWT(parts[1]));
+                                        
+                                        console.log("    头部: " + JSON.stringify(header));
+                                        console.log("    负载: " + JSON.stringify(payload));
+                                    } catch (e) {
+                                        console.log("    JWT解析错误: " + e);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.log("[-] 检查请求体时出错: " + e);
+                    }
+                    
+                    // 调用原始方法
+                    return oldWriteTo.call(this, sink);
+                };
+            }
         } catch (e) {
-            // Volley可能不在应用中
+            console.log("[-] Hook请求体失败: " + e);
         }
         
         console.log("[+] JWT Token提取器已设置");
@@ -280,47 +415,161 @@ Java.perform(function() {
     }
 });
 
-// JWT解码辅助函数
+/**
+ * 解码JWT令牌的Base64部分
+ * @param {string} str - JWT令牌的Base64编码部分
+ * @return {string} 解码后的字符串
+ */
 function decodeJWT(str) {
-    // Base64 URL解码
+    // 补全Base64填充
     str = str.replace(/-/g, '+').replace(/_/g, '/');
-    var padding = str.length % 4;
-    if (padding) {
-        str += '===='.slice(padding);
+    switch (str.length % 4) {
+        case 0:
+            break;
+        case 2:
+            str += "==";
+            break;
+        case 3:
+            str += "=";
+            break;
+        default:
+            throw "非法Base64字符串长度";
     }
     
-    // 使用atob解码
-    var decoded = '';
     try {
-        decoded = Java.use('java.lang.String').$new(
-            Java.use('android.util.Base64').decode(str, 0)
-        ).toString();
+        // 使用Android的Base64解码
+        var Base64 = Java.use("android.util.Base64");
+        var decoded = Base64.decode(str, 0);
+        return Java.use("java.lang.String").$new(decoded, "UTF-8");
     } catch (e) {
-        // 回退到简单解码
-        console.log("Base64解码失败，使用简单解码");
-        var base64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-        var result = '';
-        var bits = 0, bitcount = 0;
+        console.log("[-] Base64解码失败: " + e);
+        return "";
+    }
+}
+
+// 7. 监控SQLite数据库操作
+/**
+ * 此示例展示如何监控应用的SQLite数据库操作
+ * 适用于分析应用数据存储和处理的场景
+ */
+Java.perform(function() {
+    try {
+        // 监控数据库查询
+        var SQLiteDatabase = Java.use("android.database.sqlite.SQLiteDatabase");
         
-        for (var i = 0; i < str.length; i++) {
-            if (str[i] === '=') continue;
-            var index = base64chars.indexOf(str[i]);
-            if (index < 0) continue;
+        // 监控insert操作
+        SQLiteDatabase.insert.overload('java.lang.String', 'java.lang.String', 'android.content.ContentValues').implementation = function(table, nullColumnHack, values) {
+            console.log("[*] 数据库插入操作:");
+            console.log("    表: " + table);
             
-            bits = (bits << 6) | index;
-            bitcount += 6;
-            
-            if (bitcount >= 8) {
-                bitcount -= 8;
-                result += String.fromCharCode((bits >> bitcount) & 0xff);
-                bits &= (1 << bitcount) - 1;
+            // 打印要插入的值
+            if (values) {
+                var keySet = values.keySet();
+                var keys = keySet.toArray();
+                for (var i = 0; i < keys.length; i++) {
+                    var key = keys[i];
+                    console.log("    " + key + " = " + values.get(key));
+                }
             }
-        }
+            
+            // 获取调用栈跟踪
+            console.log("    调用栈: " + getFullStackTrace().split("\n")[2]);
+            
+            return this.insert(table, nullColumnHack, values);
+        };
         
-        decoded = result;
+        // 监控查询操作
+        var queryMethods = ["query", "rawQuery"];
+        queryMethods.forEach(function(method) {
+            SQLiteDatabase[method].overloads.forEach(function(overload) {
+                overload.implementation = function() {
+                    var sql = "";
+                    var args = [];
+                    
+                    // 提取SQL语句和参数
+                    if (arguments[0]) {
+                        if (typeof arguments[0] === "string") {
+                            sql = arguments[0];
+                        } else if (method === "query") {
+                            sql = "SELECT * FROM " + arguments[0]; // 表名
+                        }
+                    }
+                    
+                    // 提取查询参数
+                    if (arguments[1] && Array.isArray(arguments[1])) {
+                        args = arguments[1];
+                    }
+                    
+                    console.log("[*] 数据库查询:");
+                    console.log("    SQL: " + sql);
+                    if (args.length > 0) {
+                        console.log("    参数: " + args.join(", "));
+                    }
+                    
+                    var cursor = overload.apply(this, arguments);
+                    console.log("    结果行数: " + (cursor ? cursor.getCount() : 0));
+                    
+                    return cursor;
+                };
+            });
+        });
+        
+        console.log("[+] SQLite数据库监控已设置");
+    } catch (e) {
+        console.log("[-] SQLite数据库监控设置失败: " + e);
+    }
+});
+
+// 8. 辅助功能: 仅在特定情况下激活监控
+/**
+ * 此示例展示如何在特定条件满足时才激活监控
+ * 可以避免长时间监控导致的性能问题和日志过多
+ */
+Java.perform(function() {
+    // 创建一个激活标志
+    var monitoringActive = false;
+    
+    // 激活/停用监控的函数
+    function toggleMonitoring(active) {
+        monitoringActive = active;
+        console.log("[*] 监控状态: " + (monitoringActive ? "已激活" : "已停用"));
     }
     
-    return decoded;
-}
+    // 在特定Activity创建时激活监控
+    try {
+        var targetActivity = "com.example.app.PaymentActivity";
+        var Activity = Java.use(targetActivity);
+        
+        Activity.onCreate.overload('android.os.Bundle').implementation = function(bundle) {
+            console.log("[+] 检测到目标Activity启动，激活监控");
+            toggleMonitoring(true);
+            return this.onCreate(bundle);
+        };
+        
+        Activity.onDestroy.implementation = function() {
+            console.log("[+] 检测到目标Activity销毁，停用监控");
+            toggleMonitoring(false);
+            return this.onDestroy();
+        };
+        
+        // 下面是一个使用激活标志的监控实例
+        var HttpURLConnection = Java.use("java.net.HttpURLConnection");
+        HttpURLConnection.getOutputStream.implementation = function() {
+            var stream = this.getOutputStream();
+            
+            // 仅在监控激活时记录
+            if (monitoringActive) {
+                console.log("[*] 发起HTTP请求: " + this.getURL().toString());
+                console.log("    方法: " + this.getRequestMethod());
+            }
+            
+            return stream;
+        };
+        
+        console.log("[+] 条件监控已设置");
+    } catch (e) {
+        console.log("[-] 条件监控设置失败: " + e);
+    }
+});
 
 console.log("[+] Frida全功能Hook框架 - 使用示例脚本已加载"); 

@@ -1,7 +1,55 @@
 /*
- * 加密监控模块
- * 功能：监控和记录常见加密算法的使用，自动提取密钥、IV、明文、密文
- * 支持：AES/DES/RSA/MD5/SHA/Base64 等
+ * 脚本名称：crypto_monitor.js
+ * 功能描述：监控和分析Android应用中使用的各种加密算法，自动提取密钥、IV、明文和密文
+ * 
+ * 适用场景：
+ *   - 分析应用使用的加密算法和参数
+ *   - 提取应用运行时使用的加密密钥
+ *   - 监控应用数据加密和解密过程
+ *   - 对应用的安全实现进行安全评估
+ *   - 验证加密算法使用的正确性
+ *   - 辅助逆向分析加密保护的通信协议
+ *
+ * 使用方法：
+ *   1. 可通过frida_master.js主入口文件加载(推荐)
+ *   2. 也可单独使用: frida -U -f 目标应用包名 -l crypto_monitor.js --no-pause
+ *   3. 或者 frida -U --attach-pid 目标进程PID -l crypto_monitor.js
+ *
+ * 启动方式说明：
+ *   - -U: 使用USB连接的设备
+ *   - -f: 指定以spawn方式启动的应用包名
+ *   - --attach-pid: 附加到已运行的进程
+ *   - --no-pause: 注入后不暂停应用执行
+ *
+ * 工作原理：
+ *   脚本监控Android加密API和常见第三方加密库：
+ *   
+ *   1. 对称加密监控：
+ *      - 监控javax.crypto.Cipher的init和doFinal方法
+ *      - 提取AES/DES等对称加密的密钥和IV参数
+ *      - 记录加密和解密的明文与密文
+ *      - 监控SecretKeySpec和IvParameterSpec创建
+ *
+ *   2. 摘要算法监控：
+ *      - 监控java.security.MessageDigest的update和digest方法
+ *      - 提取MD5/SHA等哈希算法的输入和输出
+ *
+ *   3. 编码转换监控：
+ *      - 监控Base64编码和解码操作
+ *      - 记录编码前后的数据
+ *
+ *   4. 非对称加密监控：
+ *      - 监控RSA等非对称加密算法的使用
+ *      - 记录公钥和私钥操作
+ *
+ *   5. 第三方库监控：
+ *      - 支持监控常见第三方加密库
+ *
+ * 注意事项：
+ *   - 对应用性能有一定影响，特别是加密频繁的应用
+ *   - 与auto_extractor.js模块配合使用可获得更好效果
+ *   - 针对自定义加密算法可能需要额外定制
+ *   - 复杂的混淆或Native实现的加密可能无法监控
  */
 
 module.exports = function(config, logger, utils) {

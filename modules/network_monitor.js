@@ -1,7 +1,61 @@
 /*
- * 网络监控模块
- * 功能：监控和记录HTTP/HTTPS请求和响应，WebSocket通信等
- * 支持：OkHttp, HttpURLConnection, WebView, Volley, WebSocket等
+ * 脚本名称：network_monitor.js
+ * 功能描述：全面监控Android应用的网络通信，包括HTTP/HTTPS请求、WebSocket通信等
+ * 
+ * 适用场景：
+ *   - 分析应用的API通信内容和格式
+ *   - 监控应用发送的敏感数据
+ *   - 检查应用的请求和响应安全性
+ *   - 调试网络相关问题
+ *   - 分析应用与服务器的交互逻辑
+ *   - 审查应用的数据传输加密方式
+ *   - 辅助逆向分析应用的API接口规范
+ *
+ * 使用方法：
+ *   1. 可通过frida_master.js主入口文件加载(推荐)
+ *   2. 也可单独使用: frida -U -f 目标应用包名 -l network_monitor.js --no-pause
+ *   3. 或者 frida -U --attach-pid 目标进程PID -l network_monitor.js
+ *
+ * 启动方式说明：
+ *   - -U: 使用USB连接的设备
+ *   - -f: 指定以spawn方式启动的应用包名
+ *   - --attach-pid: 附加到已运行的进程
+ *   - --no-pause: 注入后不暂停应用执行
+ *
+ * 工作原理：
+ *   本脚本监控多种网络通信渠道：
+ *
+ *   1. HTTP/HTTPS库监控：
+ *      - OkHttp(2.x/3.x): 监控请求创建和执行
+ *      - HttpURLConnection: 监控连接创建和输入/输出流
+ *      - Volley: 监控请求队列和响应处理
+ *
+ *   2. WebView监控：
+ *      - 监控WebView的URL加载
+ *      - 拦截WebView的JavaScript交互
+ *      - 记录WebView中的表单提交
+ *
+ *   3. WebSocket监控：
+ *      - 监控WebSocket连接建立
+ *      - 记录发送和接收的消息
+ *
+ *   4. 原生Socket监控：
+ *      - 跟踪Socket连接创建
+ *      - 监控Socket数据输入和输出
+ *
+ *   对于每个网络请求，脚本记录：
+ *   - 完整URL和HTTP方法
+ *   - 请求头和响应头
+ *   - 请求体和响应体内容
+ *   - 响应状态码
+ *   - 请求和响应的时间戳
+ *
+ * 注意事项：
+ *   - 与SSL证书绕过脚本配合使用可监控HTTPS流量
+ *   - 大型响应体可能被截断以避免内存占用过高
+ *   - 使用自定义网络库的应用可能需要额外定制
+ *   - 二进制数据传输可能无法正确显示为文本
+ *   - 与通杀绕过SSL Pinning.js配合使用效果最佳
  */
 
 module.exports = function(config, logger, utils) {

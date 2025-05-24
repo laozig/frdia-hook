@@ -1,7 +1,46 @@
 /*
- * 反调试绕过模块
- * 功能：绕过各种反调试、反root、反模拟器、反注入、反抓包等检测
- * 支持：Java层和Native层的各种检测机制
+ * 脚本名称：anti_debug.js
+ * 功能描述：全面绕过各种反调试、反Root、反模拟器等检测机制，确保Frida可以正常工作
+ * 
+ * 适用场景：
+ *   - 分析具有反调试保护的Android应用
+ *   - 绕过应用的Root检测机制
+ *   - 绕过应用的模拟器检测
+ *   - 绕过应用的Frida/Xposed等注入检测
+ *   - 绕过应用的签名校验和完整性校验
+ *   - 在有安全保护的应用中使用Frida进行分析
+ *
+ * 使用方法：
+ *   1. 可通过frida_master.js主入口文件加载(推荐)
+ *   2. 也可单独使用: frida -U -f 目标应用包名 -l anti_debug.js --no-pause
+ *   3. 或者 frida -U --attach-pid 目标进程PID -l anti_debug.js
+ *
+ * 启动方式说明：
+ *   - -U: 使用USB连接的设备
+ *   - -f: 指定以spawn方式启动的应用包名
+ *   - --attach-pid: 附加到已运行的进程
+ *   - --no-pause: 注入后不暂停应用执行
+ *
+ * 工作原理：
+ *   1. Java层防护绕过：
+ *      - 挂钩Debug.isDebuggerConnected()等调试检测方法
+ *      - 修改ApplicationInfo.flags以隐藏调试标志
+ *      - 拦截System.exit()阻止应用强制退出
+ *      - 绕过FileSystem中的su等Root路径检测
+ *      - 伪装Build信息以绕过模拟器检测
+ *
+ *   2. Native层防护绕过：
+ *      - 拦截ptrace调用以绕过反调试保护
+ *      - 修改/proc/maps内容以隐藏Frida痕迹
+ *      - 拦截常见的Native层Root检测函数
+ *
+ *   3. 自动记录所有被绕过的检测点，便于分析应用保护机制
+ *
+ * 注意事项：
+ *   - 本脚本需要配合其他保护绕过脚本(如通杀绕过Frida检测.js)使用效果最佳
+ *   - 某些高级保护可能需要额外定制的绕过方法
+ *   - 建议在spawn模式下使用，以便尽早拦截所有检测
+ *   - 可通过config对象的bypassAllDetection开关控制是否启用绕过功能
  */
 
 module.exports = function(config, logger, utils) {

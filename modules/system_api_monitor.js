@@ -1,6 +1,63 @@
 /**
- * Frida系统函数监控模块
- * 监控常用Java/Android系统函数的调用，包括集合操作、字符串处理、日志和UI交互等
+ * 脚本名称：system_api_monitor.js
+ * 功能描述：监控Android系统API和Java标准库的调用，用于分析应用行为
+ * 
+ * 适用场景：
+ *   - 分析应用使用的数据结构和算法
+ *   - 追踪字符串处理和数据转换操作
+ *   - 监控集合类（HashMap、ArrayList等）的使用
+ *   - 审计编码解码操作（Base64、URL编码等）
+ *   - 观察应用与Android系统的交互
+ *   - 辅助理解应用内部实现逻辑
+ *   - 分析应用的数据处理流程
+ *
+ * 使用方法：
+ *   1. 可通过frida_master.js主入口文件加载(推荐)
+ *   2. 也可单独使用: frida -U -f 目标应用包名 -l system_api_monitor.js --no-pause
+ *   3. 或者 frida -U --attach-pid 目标进程PID -l system_api_monitor.js
+ *
+ * 启动方式说明：
+ *   - -U: 使用USB连接的设备
+ *   - -f: 指定以spawn方式启动的应用包名
+ *   - --attach-pid: 附加到已运行的进程
+ *   - --no-pause: 注入后不暂停应用执行
+ *
+ * 工作原理：
+ *   本脚本监控多个系统API类别：
+ *   
+ *   1. 集合操作监控：
+ *      - HashMap/LinkedHashMap的put、get、remove等操作
+ *      - ArrayList/HashSet的增删改查方法
+ *      - Collections工具类的排序、洗牌等静态方法
+ *
+ *   2. 字符串处理监控：
+ *      - String类的常用方法（split、replace、substring等）
+ *      - StringBuilder/StringBuffer的操作方法
+ *      - 字符串构造和转换方法
+ *      - 正则表达式相关操作
+ *
+ *   3. 编解码监控：
+ *      - Base64编码解码
+ *      - URL编解码
+ *      - GZip压缩解压
+ *      - 十六进制转换
+ *
+ *   4. 系统交互监控：
+ *      - 日志打印（Log.v/d/i/w/e）
+ *      - Toast显示
+ *      - UI交互操作
+ *
+ * 高级特性：
+ *   - 支持添加自定义钩子
+ *   - 可配置排除特定调用栈
+ *   - 调整日志详细程度
+ *   - 针对特定方法设置过滤器
+ *
+ * 注意事项：
+ *   - 开启全部监控可能产生大量日志，影响性能
+ *   - 可通过配置选择性开启特定类别监控
+ *   - 与其他监控模块结合使用可获得更全面的应用行为视图
+ *   - 特别适合逆向分析和学习应用内部实现机制
  */
 
 module.exports = function(userConfig, logger, utils) {
